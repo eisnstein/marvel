@@ -18,6 +18,7 @@ typedef struct str {
 } str;
 
 str *str_create();
+str *str_from(const char *s);
 void str_append(str *s, const char *append, size_t len);
 void str_destroy(str *s);
 

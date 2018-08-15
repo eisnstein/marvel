@@ -9,6 +9,8 @@ SOURCES_TESTS = $(wildcard tests/*_test.c)
 OBJECTS_TESTS = $(patsubst %.c,%.o,$(SOURCES_TESTS))
 TESTS = $(patsubst %.o,%,$(OBJECTS_TESTS))
 
+$(info OBJECTS_TESTS is $(OBJECTS_TESTS))
+
 all: main
 
 main: $(OBJECTS)
@@ -24,10 +26,10 @@ tests: $(TESTS)
 	./tests/run_tests.sh
 
 $(TESTS): $(OBJECTS_TESTS)
-	$(CC) $^ str.o -o $@ $(CFLAGS)
+	$(CC) $^ str.o list.o $(CFLAGS)
 
 $(OBJECTS_TESTS): $(SOURCES_TESTS)
-	$(CC) -c $^ -o $@ $(CFLAGS)
+	$(CC) -c $^ $(CFLAGS)
 
 .PHONY: clean
 clean:

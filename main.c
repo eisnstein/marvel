@@ -2,7 +2,6 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <openssl/evp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,6 +9,8 @@
 #include <sys/socket.h>
 #include <unistd.h>
 
+#include "env.h"
+#include "marvel.h"
 #include "str.h"
 
 #define MAXDATASIZE 102400
@@ -23,28 +24,15 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
-char *generate_payload(const char *ts, const char *pr_api_key, const char *pub_api_key)
+int main(int argc, char *argv[], char *env[])
 {
-    size_t ts_len = strlen(ts);
-    size_t pr_len = strlen(pr_api_key);
-    size_t pub_len = strlen(pub_api_key);
+    env_init();
 
-    size_t len = ts_len + pr_len + pub_len;
-    char *out = calloc(len + 1, sizeof(char));
+    while (*env) {
+        //printf("%s\n", *env);
+        env++;
+    }
 
-    memcpy(out, ts, ts_len);
-    memcpy(&out[ts_len], pr_api_key, pr_len);
-    memcpy(&out[ts_len + pr_len], pub_api_key, pub_len);
-
-    out[len] = '\0';
-
-    return out;   
-}
-
-
-
-int main(int argc, char *argv[])
-{
     int sockfd, numbytes;
     char buf[MAXDATASIZE];
     str *msg = str_create();
@@ -53,37 +41,22 @@ int main(int argc, char *argv[])
     int bytesReceived = 0;
     char ipstr[INET6_ADDRSTRLEN];
     char *ts = "12345";
-    char *private_api_key = "";
-    char *endpoint = "";
-    EVP_MD_CTX *mdctx;
-    const EVP_MD *md;
-    char public_api_key[];
-    unsigned char md_value[EVP_MAX_MD_SIZE];
-    unsigned int md_len, i;
-    char *hash_payload = NULL;
-    char hash[EVP_MAX_MD_SIZE + 1] = { '\0' };
+    char *endpoint = getenv(MARVEL_BASE_URL);
 
-    hash_payload = generate_payload(ts, private_api_key, public_api_key);
-
-    md = EVP_get_digestbyname("MD5");
-    mdctx = EVP_MD_CTX_new();
-    EVP_DigestInit_ex(mdctx, md, NULL);
-    EVP_DigestUpdate(mdctx, hash_payload, strlen(hash_payload));
-    EVP_DigestFinal_ex(mdctx, md_value, &md_len);
-    EVP_MD_CTX_free(mdctx);
-
-    for (i = 0; i < md_len; i++) {
-        sprintf(&hash[i * 2], "%02x", md_value[i]);
+    char *pr_api_key = getenv(MARVEL_PRIVATE_KEY);
+    if (pr_api_key == NULL) {
+        perror("Could not read private key from env. [Error]");
+        exit(-1);
     }
 
-    if (argc != 2) {
-        fprintf(stderr, "usage: main <hostmame>\n");
-        return EXIT_FAILURE;
+    //char *pub_api_key = "asdf";
+    char *pub_api_key = getenv(MARVEL_PUBLIC_KEY);
+    if (pub_api_key == NULL) {
+        perror("Could not read public key from env. [Error]");
+        exit(-1);
     }
 
-    free(hash_payload);
-
-    //endpoint = argv[1];
+    char *hash = auth_hash(ts, pr_api_key, pub_api_key);
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
@@ -121,10 +94,11 @@ int main(int argc, char *argv[])
 
     freeaddrinfo(res);
 
-    char *req = "GET /v1/public/comics?ts=1234 HTTP/1.1\r\n"
+    /*char req[185] = { '\0' };
+    sprintf(req, "GET /v1/public/comics?ts=%s&apikey=%s&hash=%s HTTP/1.1\r\n"
         "Host: gateway.marvel.com\r\n"
         "User-Agent: curl/7.58.0\r\n"
-        "Accept: */*\r\n\r\n";
+        "Accept: *\/*\r\n\r\n", ts, pub_api_key, hash);
 
     size_t len = strlen(req);
     size_t len2 = 0;
@@ -137,7 +111,7 @@ int main(int argc, char *argv[])
 
     printf("req:\n%s", req);
     //req = "GET / HTTP/1.1\r\nHost: localhost\r\n\r\n";
-    if ((status = send(sockfd, req, 184, 0)) == -1) {
+    if ((status = send(sockfd, req, 185, 0)) == -1) {
         perror("send");
         close(sockfd);
         exit(-1);
@@ -157,8 +131,8 @@ int main(int argc, char *argv[])
 
 
     printf("size: %u\n", msg->size);
-    printf("len: %u\n", msg->len);
-    //printf("res:\n%s\n", msg.data);
+    printf("len: %u\n", str_length(msg));
+    printf("res:\n%s\n", str_data(msg));*/
 
     close(sockfd);
     str_destroy(msg);

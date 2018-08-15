@@ -24,6 +24,16 @@ str *str_create()
     return s;
 }
 
+str *str_from(const char *string)
+{
+    size_t len = strlen(string);
+
+    str *s = str_create();
+    str_append(s, string, len);    
+
+    return s;
+}
+
 void str_append(str *s, const char *append, size_t len)
 {
     char *new = NULL;
