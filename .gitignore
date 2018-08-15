@@ -1,0 +1,9 @@
+.vscode
+main
+*.o
+.env
+
+# tests
+tests/*.o
+tests/*_test
+tests/error_log.txt
