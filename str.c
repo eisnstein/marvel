@@ -14,7 +14,7 @@ str *str_create()
 
     s->size = STR_INITIAL_SIZE;
     s->expand = STR_EXPAND;
-    s->len = 0;
+    s->length = 0;
     s->data = calloc(s->size, sizeof(char));
     if (s->data == NULL) {
         perror("Cannot allocate memory for new string data in str_create. [Error]");
@@ -34,10 +34,15 @@ str *str_from(const char *string)
     return s;
 }
 
-void str_append(str *s, const char *append, size_t len)
+str *str_with(size_t initial_length)
+{
+    
+}
+
+void str_append(str *s, const char *append, size_t length)
 {
     char *new = NULL;
-    uint32_t new_len = s->len + len;
+    uint32_t new_len = s->length + length;
     if (new_len >= s->size) {
         new = realloc(s->data, new_len + s->expand);
         s->size += s->expand;
@@ -45,11 +50,11 @@ void str_append(str *s, const char *append, size_t len)
         new = s->data;
     }
 
-    memcpy(&new[s->len], append, len);
+    memcpy(&new[s->length], append, length);
     
     new[new_len] = '\0';
     s->data = new;
-    s->len = new_len;
+    s->length = new_len;
 }
 
 void str_destroy(str *s)
@@ -57,4 +62,6 @@ void str_destroy(str *s)
     if (s->data) {
         free(s->data);
     }
+
+    free(s);
 }

@@ -29,7 +29,7 @@ int main(int argc, char *argv[], char *env[])
     env_init();
 
     while (*env) {
-        //printf("%s\n", *env);
+        printf("%s\n", *env);
         env++;
     }
 
