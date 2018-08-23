@@ -70,7 +70,7 @@ void *list_at(list *l, uint32_t index)
     }
 
     list_node *node = l->head;
-    for (int i = 0; i < index; i++) {
+    for (uint32_t i = 0; i < index; i++) {
         node = node->next;
     }
 

@@ -4,22 +4,27 @@
 #include <string.h>
 
 #include "marvel.h"
-#include "util.h"
 #include "uri.h"
+#include "util.h"
 
 uri_maker *uri_maker_create(const str *pr_api_key, const str *pub_api_key)
 {
     uri_maker *urm = malloc(sizeof(uri_maker));
-    verify_memory(urm);
+    throw_mem_(urm);
 
+    urm->ts = NULL;
     urm->pr_api_key = pr_api_key;
     urm->pub_api_key = pub_api_key;
     urm->hasher = get_hash;
+    urm->build_req = build_req;
 
     return urm;
+
+    error:
+    return NULL;
 }
 
-static inline str *generate_payload(uri_maker *self, const str *ts)
+static inline str *generate_payload(uri_maker *self)
 {
     /*size_t ts_len = str_length(ts);
     size_t pr_len = str_length(self->pr_api_key);
@@ -29,7 +34,7 @@ static inline str *generate_payload(uri_maker *self, const str *ts)
     char *out = calloc(len + 1, sizeof(char));*/
     str *out = str_create();
 
-    str_append(out, str_data(ts), str_length(ts));
+    str_append(out, str_data(self->ts), str_length(self->ts));
     str_append(out, str_data(self->pr_api_key), str_length(self->pr_api_key));
     str_append(out, str_data(self->pub_api_key), str_length(self->pub_api_key));
 
@@ -42,7 +47,7 @@ static inline str *generate_payload(uri_maker *self, const str *ts)
     return out;   
 }
 
-static char *get_hash(uri_maker *self, const char *ts)
+static char *get_hash(uri_maker *self)
 {
     EVP_MD_CTX *mdctx;
     const EVP_MD *md;
@@ -51,10 +56,11 @@ static char *get_hash(uri_maker *self, const char *ts)
     str *hash_payload = NULL;
     //char hash[EVP_MAX_MD_SIZE + 1] = { '\0' };
     char *hash = calloc(1, EVP_MAX_MD_SIZE + 1);
+    throw_mem_(hash);
 
-    str *ts = str_from("12345");
+    self->ts = str_from("123345");
 
-    hash_payload = generate_payload(self, ts);
+    hash_payload = generate_payload(self);
 
     md = EVP_get_digestbyname("MD5");
     mdctx = EVP_MD_CTX_new();
@@ -68,13 +74,24 @@ static char *get_hash(uri_maker *self, const char *ts)
     }
 
     str_destroy(hash_payload);
-    str_destroy(ts);
 
     return hash;
+
+    error:
+    return NULL;
 }
 
-void uri_maker_destry(uri_maker *self)
+static str *build_req(uri_maker *self)
 {
+    return "hallo";
+}
+
+void uri_maker_destroy(uri_maker *self)
+{
+    str_destroy(self->ts);
+    str_destroy(self->pr_api_key);
+    str_destroy(self->pub_api_key);
+
     if (self) {
         free(self);
     }

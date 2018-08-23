@@ -3,25 +3,24 @@
 #include <string.h>
 
 #include "str.h"
+#include "util.h"
 
 str *str_create()
 {
     str *s = malloc(sizeof(str));
-    if (s == NULL) {
-        perror("Cannot allocate memory for new string in str_create. [Error]");
-        exit(1);
-    }
+    throw_mem_(s);
 
     s->size = STR_INITIAL_SIZE;
     s->expand = STR_EXPAND;
-    s->length = 0;
+    s->len = 0;
+
     s->data = calloc(s->size, sizeof(char));
-    if (s->data == NULL) {
-        perror("Cannot allocate memory for new string data in str_create. [Error]");
-        exit(1);
-    }
+    throw_mem_(s->data);
 
     return s;
+
+    error:
+    return NULL;
 }
 
 str *str_from(const char *string)
@@ -34,27 +33,26 @@ str *str_from(const char *string)
     return s;
 }
 
-str *str_with(size_t initial_length)
-{
-    
-}
-
-void str_append(str *s, const char *append, size_t length)
+void str_append(str *s, const char *append, size_t len)
 {
     char *new = NULL;
-    uint32_t new_len = s->length + length;
+    uint32_t new_len = s->len + len;
     if (new_len >= s->size) {
         new = realloc(s->data, new_len + s->expand);
+        throw_mem_(new);
         s->size += s->expand;
     } else {
         new = s->data;
     }
 
-    memcpy(&new[s->length], append, length);
+    memcpy(&new[s->len], append, len);
     
     new[new_len] = '\0';
     s->data = new;
-    s->length = new_len;
+    s->len = new_len;
+
+    error:
+    return;
 }
 
 void str_destroy(str *s)

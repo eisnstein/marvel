@@ -26,7 +26,7 @@ tests: $(TESTS)
 	./tests/run_tests.sh
 
 $(TESTS): $(OBJECTS_TESTS)
-	$(CC) $^ str.o list.o $(CFLAGS)
+	$(CC) $^ str.o $(CFLAGS)
 
 $(OBJECTS_TESTS): $(SOURCES_TESTS)
 	$(CC) -c $^ $(CFLAGS)

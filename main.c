@@ -12,6 +12,8 @@
 #include "env.h"
 #include "marvel.h"
 #include "str.h"
+#include "uri.h"
+#include "util.h"
 
 #define MAXDATASIZE 102400
 
@@ -34,35 +36,29 @@ int main(int argc, char *argv[], char *env[])
     }
 
     int sockfd, numbytes;
-    char buf[MAXDATASIZE];
+    //char buf[MAXDATASIZE];
     str *msg = str_create();
     struct addrinfo hints, *res, *p;
     int status = 0;
-    int bytesReceived = 0;
+    //int bytesReceived = 0;
     char ipstr[INET6_ADDRSTRLEN];
-    char *ts = "12345";
-    char *endpoint = getenv(MARVEL_BASE_URL);
+    const str *endpoint = str_from(getenv(MARVEL_BASE_URL));
 
-    char *pr_api_key = getenv(MARVEL_PRIVATE_KEY);
-    if (pr_api_key == NULL) {
-        perror("Could not read private key from env. [Error]");
-        exit(-1);
-    }
+    const str *pr_api_key = str_from(getenv(MARVEL_PRIVATE_KEY));
+    die_(pr_api_key == NULL, "Could not get private key from env.");
 
     //char *pub_api_key = "asdf";
-    char *pub_api_key = getenv(MARVEL_PUBLIC_KEY);
-    if (pub_api_key == NULL) {
-        perror("Could not read public key from env. [Error]");
-        exit(-1);
-    }
+    const str *pub_api_key = getenv(MARVEL_PUBLIC_KEY);
+    die_(pub_api_key == NULL, "Could not get public key from env.");
 
-    char *hash = auth_hash(ts, pr_api_key, pub_api_key);
+    uri_maker *uri = uri_maker_create(pr_api_key, pub_api_key);
+    char *req = uri->build_req(uri);
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
 
-    if ((status = getaddrinfo(endpoint, "80", &hints, &res)) != 0) {
+    if ((status = getaddrinfo(str_data(endpoint), "80", &hints, &res)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
         return EXIT_FAILURE;
     }
@@ -72,7 +68,6 @@ int main(int argc, char *argv[], char *env[])
         return EXIT_FAILURE;
     }
 
-    int n = 0;
     int con = 0;
     for (p = res; p != NULL; p = p->ai_next) {
         if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
