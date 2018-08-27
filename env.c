@@ -18,7 +18,9 @@ int env_init()
     int ret = 0;
 
     strlist *list = NULL;
-    str *envval = NULL;
+    str *envval = str_create();
+    throw_(envval == NULL, "Could not create envval string object.");
+
     str *env_key = NULL;
     str *env_value = NULL;
 
@@ -27,27 +29,29 @@ int env_init()
      * and set the env variable.
      */ 
     while ((read = getline(&line, &len, f)) != -1) {
-        str_copy(envval, line, read);
+        str_put_into(envval, line, read);
 
         // get rid of the <newline> char
         str_strip_nl(envval);
 
-        list = str_split(envval, '=');
-        env_key = strlist_at(list, 0);
-        env_value = strlist_at(list, 1);
-        
-        // set the env variable (has to be in the form "name=value")
-        // ret = putenv(str_data(envval));
-        ret = setenv(str_data(env_key), str_data(env_value));
-        if (ret != 0) {
-            perror("Could not put env variable. [Error]");
-            exit(-1);
+        list = str_split(envval, "=");
+        if (list == NULL) {
+            continue;
         }
+
+        env_key = strlist_at(list, 0);
+        throw_(env_key == NULL, "Could not get key of env variable.");
+
+        env_value = strlist_at(list, 1);
+        throw_(env_value == NULL, "Could not get value of env variable.");
+
+        ret = setenv(str_data(env_key), str_data(env_value));
+        throw_(ret == -1, "Could not set env variable.");
 
         strlist_destroy(list);
     }
 
-
+    str_destroy(envval);
     fclose(f);
     return 0;
 

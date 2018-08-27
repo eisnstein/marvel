@@ -124,17 +124,22 @@ void str_append(str *s, const char *append, size_t len)
  * 
  * @return strlist | NULL   pointer to string list
  */
-strlist *str_split(str *s, char delimiter)
+strlist *str_split(str *s, const char *delimiter)
 {
     strlist *sl = strlist_create();
     throw_(sl == NULL, "Could not create string list.");
 
-    char *token = strtok(str_data(s), &delimiter);
+    // get the first token
+    char *token = strtok(str_data(s), delimiter);
+    throw_(token == NULL, "Could not find first token.");
 
+    // if token is not NULL, the token will be pushed onto
+    // the string list
     while (token != NULL) {
         strlist_push(sl, str_from(token));
 
-        token = strtok(NULL, &delimiter);
+        // get the next token
+        token = strtok(NULL, delimiter);
     }
 
     return sl;
@@ -144,18 +149,30 @@ strlist *str_split(str *s, char delimiter)
 }
 
 /**
+ * Put a raw string into an existing string object. Existing data
+ * will be overwritten.
+ * 
+ * @param str *s            point to a string object
+ * @param const char *put   pointer to data which will be put
+ * @param size_t len        len of the raw string to copy into
+ * 
+ */
+void str_put_into(str *s, const char *put, size_t len)
+{
+    // to copy / overwrite the existing data, we just set
+    // the len to 0, so that the new string will be copied
+    // to the begining
+    s->len = 0;
+    str_append(s, put, len);
+}
+
+/**
  * Destroy (free) a string object.
  * 
  * @param str *s    pointer to a string object
  * 
  * @return void
  */
-void str_copy(str *s, const char *copy, size_t len)
-{
-    s->len = 0;
-    str_append(s, copy, len);
-}
-
 void str_destroy(str *s)
 {
     if (s == NULL) {
@@ -205,7 +222,7 @@ strlist *strlist_create()
 }
 
 /**
- * Push / append a str object at the end of the string list sl.
+ * Push / append a string object at the end of the string list.
  * 
  * @param strlist *sl   pointer to a string list
  * @param str *value    pointer to a string object
@@ -264,7 +281,7 @@ str *strlist_pop(strlist *sl)
 str *strlist_at(strlist *sl, size_t index)
 {
     // return if index is bigger than the actual size of the list
-    if (sl->size - 1 > index) {
+    if (sl->size - 1 < index) {
         return NULL;
     }
 
@@ -291,26 +308,27 @@ void strlist_destroy(strlist *sl)
         return;
     }
 
-    strlistnode *node = sl->head;
-    // need a second reference to free the node but not lose the next node
-    strlistnode *prev = node;
-
     // if list is empty, just free list and return
-    if (node == NULL) {
+    if (strlist_empty(sl)) {
         free(sl);
         sl = NULL;
         return;
     }
 
-    while (node != NULL) {
+    strlistnode *prev = sl->head;
+    // need a second reference to free the node but not lose the next node
+    strlistnode *node = NULL;
+
+    while (prev != NULL) {
+        node = prev->next;
+
         if (prev->value) {
             str_destroy(prev->value);
         }
 
         free(prev);
 
-        
-        prev = node = node->next;
+        prev = node;
     }
 
     free(sl);

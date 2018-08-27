@@ -5,6 +5,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#define debug_(M, ...) do { \
+    fprintf(stdout, "[DEBUG] %s:%d:%s: " M "\n", __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
+} while (0)
+
 #define info_(M, ...) do { \
     fprintf(stdout, "[INFO] %s:%d:%s: " M "\n", __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
 } while (0)

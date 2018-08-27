@@ -7,6 +7,7 @@
 #define STR_INITIAL_SIZE (1024 * 1)
 #define STR_EXPAND (1024 * 1)
 
+// String related
 #define str_length(S) ((S)->len)
 #define str_data(S) ((S)->data)
 #define str_strip_nl(S) do { \
@@ -15,6 +16,10 @@
         (str_data(S)[len - 1]) = '\0'; \
     } \
 } while (0)
+
+// String list related
+#define strlist_length(SL) ((SL)->size)
+#define strlist_empty(SL) ((SL)->size == 0)
 
 typedef struct str {
     uint32_t size;
@@ -38,7 +43,8 @@ typedef struct strlist {
 str *str_create();
 str *str_from(const char *s);
 void str_append(str *s, const char *append, size_t len);
-strlist *str_split(str *s, char separator);
+strlist *str_split(str *s, const char *delimiter);
+void str_put_into(str *s, const char *put, size_t len);
 void str_destroy(str *s);
 
 strlist *strlist_create();
