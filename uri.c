@@ -88,11 +88,16 @@ static str *build_req(uri_maker *self)
 
 void uri_maker_destroy(uri_maker *self)
 {
+    if (self == NULL) {
+        return;
+    }
+
     str_destroy(self->ts);
     str_destroy(self->pr_api_key);
     str_destroy(self->pub_api_key);
 
     if (self) {
         free(self);
+        self = NULL;
     }
 }

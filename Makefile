@@ -9,8 +9,6 @@ SOURCES_TESTS = $(wildcard tests/*_test.c)
 OBJECTS_TESTS = $(patsubst %.c,%.o,$(SOURCES_TESTS))
 TESTS = $(patsubst %.o,%,$(OBJECTS_TESTS))
 
-$(info OBJECTS_TESTS is $(OBJECTS_TESTS))
-
 all: main
 
 main: $(OBJECTS)

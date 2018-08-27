@@ -15,8 +15,7 @@
 #include "uri.h"
 #include "util.h"
 
-#define MAXDATASIZE 102400
-
+#define MAXDATASIZE 1024
 void *get_in_addr(struct sockaddr *sa)
 {
     if (sa->sa_family == AF_INET) {

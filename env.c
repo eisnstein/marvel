@@ -19,7 +19,10 @@ void env_init()
     ssize_t read = 0;
     int ret = 0;
 
+    strlist *list = NULL;
     str *envval = NULL;
+    str *env_key = NULL;
+    str *env_value = NULL;
 
     /*
      * Read every line of the .env file 
@@ -31,15 +34,21 @@ void env_init()
         // get rid of the <newline> char
         str_strip_nl(envval);
 
-        printf("%s", str_data(envval));
+        list = str_split(envval, '=');
+        env_key = strlist_at(list, 0);
+        env_value = strlist_at(list, 1);
         
         // set the env variable (has to be in the form "name=value")
-        ret = putenv(str_data(envval));
+        // ret = putenv(str_data(envval));
+        ret = setenv(str_data(env_key), str_data(env_value));
         if (ret != 0) {
             perror("Could not put env variable. [Error]");
             exit(-1);
         }
+
+        strlist_destroy(list);
     }
+
 
     fclose(f);
 }

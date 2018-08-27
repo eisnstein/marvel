@@ -23,9 +23,29 @@ typedef struct str {
     char *data;
 } str;
 
+typedef struct strlistnode {
+    struct strlistnode *next;
+    struct strlistnode *prev;
+    str *value;
+} strlistnode;
+
+typedef struct strlist {
+    size_t size;
+    strlistnode *head;
+    strlistnode *tail;
+} strlist;
+
 str *str_create();
 str *str_from(const char *s);
 void str_append(str *s, const char *append, size_t len);
+strlist *str_split(str *s, char separator);
 void str_destroy(str *s);
+
+strlist *strlist_create();
+void *strlist_push(strlist *sl, str *value);
+str *strlist_pop(strlist *sl);
+str *strlist_at(strlist *sl, size_t index);
+void strlist_destroy(strlist *sl);
+
 
 #endif
