@@ -25,33 +25,34 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
-int main(int argc, char *argv[], char *env[])
+int main(int argc, char *argv[])
 {
-    env_init();
-
-    while (*env) {
-        printf("%s\n", *env);
-        env++;
-    }
+    int r = env_init();
+    throw_(r == -1, "Could not initialise env.");
 
     int sockfd, numbytes;
     //char buf[MAXDATASIZE];
     str *msg = str_create();
+    throw_(msg == NULL, "Could not create string.");
+
     struct addrinfo hints, *res, *p;
     int status = 0;
     //int bytesReceived = 0;
     char ipstr[INET6_ADDRSTRLEN];
     const str *endpoint = str_from(getenv(MARVEL_BASE_URL));
+    throw_(endpoint == NULL, "Could not create string from static.");
 
     const str *pr_api_key = str_from(getenv(MARVEL_PRIVATE_KEY));
-    die_(pr_api_key == NULL, "Could not get private key from env.");
+    throw_(pr_api_key == NULL, "Could not get private key from env.");
 
     //char *pub_api_key = "asdf";
-    const str *pub_api_key = getenv(MARVEL_PUBLIC_KEY);
-    die_(pub_api_key == NULL, "Could not get public key from env.");
+    const str *pub_api_key = str_from(getenv(MARVEL_PUBLIC_KEY));
+    throw_(pub_api_key == NULL, "Could not get public key from env.");
 
     uri_maker *uri = uri_maker_create(pr_api_key, pub_api_key);
-    char *req = uri->build_req(uri);
+    str *req = uri->build_req(uri);
+
+    printf("req: %s\n", str_data(req));
 
     memset(&hints, 0, sizeof(hints));
     hints.ai_family = AF_UNSPEC;
@@ -59,13 +60,10 @@ int main(int argc, char *argv[], char *env[])
 
     if ((status = getaddrinfo(str_data(endpoint), "80", &hints, &res)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(status));
-        return EXIT_FAILURE;
+        goto error;
     }
 
-    if (res == NULL) {
-        fprintf(stderr, "getaddrinfo: \n");
-        return EXIT_FAILURE;
-    }
+    throw_(res == NULL, "Could not get address info.");
 
     int con = 0;
     for (p = res; p != NULL; p = p->ai_next) {
@@ -128,8 +126,24 @@ int main(int argc, char *argv[], char *env[])
     printf("len: %u\n", str_length(msg));
     printf("res:\n%s\n", str_data(msg));*/
 
+    str_destroy(endpoint);
+    str_destroy(pr_api_key);
+    str_destroy(pub_api_key);
+    str_destroy(req);
+    uri_maker_destroy(uri);
     close(sockfd);
     str_destroy(msg);
 
     return EXIT_SUCCESS;
+
+    error:
+    if (endpoint) str_destroy(endpoint);
+    if (pr_api_key) str_destroy(pr_api_key);
+    if (pub_api_key) str_destroy(pub_api_key);
+    if (req) str_destroy(req);
+    if (uri) uri_maker_destroy(uri);
+    if (sockfd) close(sockfd);
+    if (msg) str_destroy(msg);
+
+    return EXIT_FAILURE;
 }

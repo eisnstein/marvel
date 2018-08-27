@@ -4,15 +4,13 @@
 #include <unistd.h>
 
 #include "marvel.h"
+#include "util.h"
 #include "str.h"
 
-void env_init()
+int env_init()
 {
     FILE *f = fopen(".env", "r");
-    if (f == NULL) {
-        perror("Could not open .env file. [Error]");
-        exit(-1);
-    }
+    throw_(f == NULL, "Could not open .env file.");
 
     char *line = NULL;
     size_t len = 0;
@@ -29,7 +27,7 @@ void env_init()
      * and set the env variable.
      */ 
     while ((read = getline(&line, &len, f)) != -1) {
-        envval = str_from(line);
+        str_copy(envval, line, read);
 
         // get rid of the <newline> char
         str_strip_nl(envval);
@@ -51,4 +49,10 @@ void env_init()
 
 
     fclose(f);
+    return 0;
+
+    error:
+    str_destroy(envval);
+    if (f) fclose(f);
+    return -1;
 }

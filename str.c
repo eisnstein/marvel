@@ -42,6 +42,7 @@ str *str_create()
     return s;
 
     error:
+    if (s) free(s);
     return NULL;
 }
 
@@ -55,6 +56,8 @@ str *str_create()
  */
 str *str_from(const char *string)
 {
+    throw_(string == NULL, "String is NULL.");
+
     size_t len = strlen(string);
 
     str *s = str_create();
@@ -63,6 +66,9 @@ str *str_from(const char *string)
     str_append(s, string, len);    
 
     return s;
+
+    error:
+    return NULL;
 }
 
 /**
@@ -78,6 +84,13 @@ str *str_from(const char *string)
  */
 void str_append(str *s, const char *append, size_t len)
 {
+    throw_(s == NULL, "String is NULL.");
+    throw_(append == NULL, "String to append is NULL.");
+
+    if (len <= 0) {
+        goto error;
+    }
+
     char *new = NULL;
 
     // calculate the needed size
@@ -137,6 +150,12 @@ strlist *str_split(str *s, char delimiter)
  * 
  * @return void
  */
+void str_copy(str *s, const char *copy, size_t len)
+{
+    s->len = 0;
+    str_append(s, copy, len);
+}
+
 void str_destroy(str *s)
 {
     if (s == NULL) {

@@ -4,8 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#define STR_INITIAL_SIZE (1024 * 50)
-#define STR_EXPAND (1024 * 50)
+#define STR_INITIAL_SIZE (1024 * 1)
+#define STR_EXPAND (1024 * 1)
 
 #define str_length(S) ((S)->len)
 #define str_data(S) ((S)->data)
