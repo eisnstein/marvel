@@ -47,7 +47,7 @@ str *str_create()
 }
 
 /**
- * Create a string object from a classical C raw char array.
+ * Create a string object from a raw C char array.
  * The char array will be copied into the string object.
  * 
  * @param const char *string    pointer to a char array
@@ -69,6 +69,22 @@ str *str_from(const char *string)
 
     error:
     return NULL;
+}
+
+/**
+ * Duplicate a string object.
+ * 
+ * @param const str *s  pointer to string object
+ * 
+ * @return str          pointer to new string object
+ */
+str *str_duplicate(const str *s)
+{
+    if (s == NULL) {
+        return NULL;
+    }
+
+    return str_from(str_data(s));
 }
 
 /**
@@ -161,7 +177,7 @@ void str_put_into(str *s, const char *put, size_t len)
 {
     // to copy / overwrite the existing data, we just set
     // the len to 0, so that the new string will be copied
-    // to the begining
+    // to the beginning
     s->len = 0;
     str_append(s, put, len);
 }

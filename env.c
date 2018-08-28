@@ -52,11 +52,13 @@ int env_init()
     }
 
     str_destroy(envval);
+    free(line);
     fclose(f);
     return 0;
 
     error:
     str_destroy(envval);
+    if (line) free(line);
     if (f) fclose(f);
     return -1;
 }

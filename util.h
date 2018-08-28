@@ -5,9 +5,13 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifdef NDEBUG
+#define debug_(M, ...)
+#else
 #define debug_(M, ...) do { \
-    fprintf(stdout, "[DEBUG] %s:%d:%s: " M "\n", __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
+    fprintf(stderr, "[DEBUG] %s:%d:%s: " M "\n", __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
 } while (0)
+#endif
 
 #define info_(M, ...) do { \
     fprintf(stdout, "[INFO] %s:%d:%s: " M "\n", __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
@@ -21,16 +25,18 @@
     fprintf(stderr, "[ERROR] %s:%d:%s: " M "\n", __FILE__, __LINE__, __func__, ##__VA_ARGS__); \
 } while (0)
 
-#define die_(A, M) do { \
+#define clean_errno() (errno == 0 ? "None" : strerror(errno))
+
+#define die_(A, M, ...) do { \
     if((A)) { \
-        fprintf(stderr, "[ERROR] %s:%d:%s: %s: " M "\n", __FILE__, __LINE__, __func__, strerror(errno)); \
+        fprintf(stderr, "[ERROR] %s:%d:%s: %s: " M "\n", __FILE__, __LINE__, __func__, clean_errno(), ##__VA_ARGS__); \
         exit(1); \
     } \
 } while (0)
 
-#define throw_(A, M) do { \
+#define throw_(A, M, ...) do { \
     if ((A)) { \
-        fprintf(stderr, "[WARNING] %s:%d:%s: %s: " M "\n", __FILE__, __LINE__, __func__, strerror(errno)); \
+        fprintf(stderr, "[WARNING] %s:%d:%s: %s: " M "\n", __FILE__, __LINE__, __func__, clean_errno(), ##__VA_ARGS__); \
         errno = 0; \
         goto error; \
     } \

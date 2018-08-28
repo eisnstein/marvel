@@ -9,6 +9,7 @@
 
 // String related
 #define str_length(S) ((S)->len)
+#define str_empty(S) ((S)->len == 0)
 #define str_data(S) ((S)->data)
 #define str_strip_nl(S) do { \
     size_t len = str_length(S); \

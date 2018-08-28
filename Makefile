@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g -Wall -Wextra -pedantic -I. -std=c11
+CFLAGS = -g -Wall -Wextra -pedantic -I. -std=c11 -DNDEBUG
 LDLIBS = -lssl -lcrypto
 
 SOURCES = $(wildcard *.c)
@@ -9,9 +9,9 @@ SOURCES_TESTS = $(wildcard tests/*_test.c)
 OBJECTS_TESTS = $(patsubst %.c,%.o,$(SOURCES_TESTS))
 TESTS = $(patsubst %.o,%,$(OBJECTS_TESTS))
 
-all: main
+all: marvel
 
-main: $(OBJECTS)
+marvel: $(OBJECTS)
 	$(CC) $^ -o $@ $(CFLAGS) $(LDLIBS)
 
 $(OBJECTS): $(SOURCES)

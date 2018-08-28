@@ -52,8 +52,6 @@ static char *get_hash(uri_maker *self)
     char *hash = calloc(1, EVP_MAX_MD_SIZE + 1);
     throw_mem_(hash);
 
-    self->ts = str_from("123345");
-
     hash_payload = generate_payload(self);
     throw_(hash_payload == NULL, "Could not generate hash payload.");
 
@@ -79,30 +77,52 @@ static char *get_hash(uri_maker *self)
 /**
  * Build 
  */
-static str *build_req(uri_maker *self)
+static char *build_req(uri_maker *self)
 {
     throw_(self == NULL, "self is NULL.");
 
-    str *url = str_from("hallo :: ");
-    str *hash = str_from(self->get_hash(self));
-    str_append(url, str_data(hash), str_length(hash));
+    char *hash = self->get_hash(self);
 
-    str_destroy(hash);
+    char *req = calloc(1024, 1);
 
-    return url;
+    sprintf(req, "GET %s/%s?ts=%s&apikey=%s&hash=%s&limit=2 HTTP/1.1\r\n"
+        "Host: gateway.marvel.com\r\n"
+        "User-Agent: curl/7.58.0\r\n"
+        "Accept: */*\r\n\r\n", 
+        str_data(self->endpoint), 
+        str_data(self->query), 
+        str_data(self->ts), 
+        str_data(self->pub_api_key), 
+        hash
+    );
+
+    free(hash);
+
+    return req;
 
     error:
     return NULL;
 }
 
-uri_maker *uri_maker_create(const str *pr_api_key, const str *pub_api_key)
+uri_maker *uri_maker_create(const str *query)
 {
     uri_maker *urm = malloc(sizeof(uri_maker));
     throw_mem_(urm);
 
-    urm->ts = NULL;
-    urm->pr_api_key = str_from(str_data(pr_api_key));
-    urm->pub_api_key = str_from(str_data(pub_api_key));
+    const str *endpoint = str_from(getenv(MARVEL_BASE_ENDPOINT));
+    throw_(endpoint == NULL, "Could not get base endpoint from env.");
+
+    const str *pr_api_key = str_from(getenv(MARVEL_PRIVATE_KEY));
+    throw_(pr_api_key == NULL, "Could not get private key from env.");
+
+    const str *pub_api_key = str_from(getenv(MARVEL_PUBLIC_KEY));
+    throw_(pub_api_key == NULL, "Could not get public key from env.");
+
+    urm->ts = str_from("12345");
+    urm->endpoint = endpoint;
+    urm->query = str_duplicate(query);
+    urm->pr_api_key = pr_api_key;
+    urm->pub_api_key = pub_api_key;
     urm->get_hash = get_hash;
     urm->build_req = build_req;
 
@@ -119,6 +139,8 @@ void uri_maker_destroy(uri_maker *self)
     }
 
     str_destroy(self->ts);
+    str_destroy(self->endpoint);
+    str_destroy(self->query);
     str_destroy(self->pr_api_key);
     str_destroy(self->pub_api_key);
 

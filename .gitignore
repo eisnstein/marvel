@@ -1,7 +1,9 @@
 .vscode
 main
+marvel
 *.o
 .env
+output.json
 
 # tests
 tests/*.o
