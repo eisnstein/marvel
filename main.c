@@ -45,7 +45,6 @@ int main(int argc, char *argv[])
     const str *pr_api_key = str_from(getenv(MARVEL_PRIVATE_KEY));
     throw_(pr_api_key == NULL, "Could not get private key from env.");
 
-    //char *pub_api_key = "asdf";
     const str *pub_api_key = str_from(getenv(MARVEL_PUBLIC_KEY));
     throw_(pub_api_key == NULL, "Could not get public key from env.");
 

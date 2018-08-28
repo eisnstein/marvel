@@ -53,5 +53,4 @@ str *strlist_pop(strlist *sl);
 str *strlist_at(strlist *sl, size_t index);
 void strlist_destroy(strlist *sl);
 
-
 #endif

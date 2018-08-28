@@ -7,6 +7,14 @@
 #include "uri.h"
 #include "util.h"
 
+/**
+ * Generates the payload which will be md5 hashed.
+ * From marvel documentation: md5(ts + privateKey + publicKey)
+ * 
+ * @param uri_maker *self   pointer to uri maker
+ * 
+ * @return str | NULL
+ */
 static inline str *generate_payload(uri_maker *self)
 {
     throw_(self == NULL, "self is NULL.");
@@ -24,6 +32,13 @@ static inline str *generate_payload(uri_maker *self)
     return NULL;
 }
 
+/**
+ * Generates the md5 hash from the ts + privateKey + publicKey.
+ * 
+ * @param uri_maker *self   pointer to uri_maker
+ * 
+ * @return *char
+ */
 static char *get_hash(uri_maker *self)
 {
     throw_(self == NULL, "self is NULL.");
@@ -61,6 +76,9 @@ static char *get_hash(uri_maker *self)
     return NULL;
 }
 
+/**
+ * Build 
+ */
 static str *build_req(uri_maker *self)
 {
     throw_(self == NULL, "self is NULL.");
