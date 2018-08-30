@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g -Wall -Wextra -pedantic -I. -std=c11 -DNDEBUG
+CFLAGS = -g -Wall -Wextra -pedantic -I. -std=c11
 LDLIBS = -lssl -lcrypto
 
 SOURCES = $(wildcard *.c)

@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -45,7 +46,7 @@ int env_init()
         env_value = strlist_at(list, 1);
         throw_(env_value == NULL, "Could not get value of env variable.");
 
-        ret = setenv(str_data(env_key), str_data(env_value));
+        ret = setenv(str_data(env_key), str_data(env_value), 1);
         throw_(ret == -1, "Could not set env variable.");
 
         strlist_destroy(list);
