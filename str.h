@@ -7,6 +7,14 @@
 #define STR_INITIAL_SIZE (1024 * 1)
 #define STR_EXPAND (1024 * 1)
 
+// move to next line
+#define mtnl(P) do { \
+    while (*(P) != '\n') { \
+        (P)++; \
+    } \
+    (P)++; \
+} while (0)
+
 // String related
 #define str_length(S) ((S)->len)
 #define str_empty(S) ((S)->len == 0)
@@ -19,7 +27,7 @@
 } while (0)
 
 // String list related
-#define strlist_length(SL) ((SL)->size)
+#define strlist_size(SL) ((SL)->size)
 #define strlist_empty(SL) ((SL)->size == 0)
 
 typedef struct str {

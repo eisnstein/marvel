@@ -33,7 +33,7 @@ struct http {
 struct http_response {
     str *raw;
     uint16_t status_code;
-    str **headers;
+    strlist *headers;
     str *body;
     http_response_parse_func http_response_parse;
 };

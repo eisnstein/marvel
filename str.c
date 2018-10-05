@@ -156,6 +156,7 @@ strlist *str_split(str *s, const char *delimiter)
 
         // get the next token
         token = strtok(NULL, delimiter);
+        debug_("token: %s", token);
     }
 
     return sl;
@@ -250,7 +251,7 @@ void *strlist_push(strlist *sl, str *value)
     strlistnode *sln = malloc(sizeof(strlistnode));
     throw_mem_(sln);
 
-    sln->value = value;
+    sln->value = str_duplicate(value);
     sln->next = NULL;
     sln->prev = NULL;
 
@@ -282,6 +283,7 @@ str *strlist_pop(strlist *sl)
     strlistnode *sln = sl->tail;
 
     sl->tail = sln->prev;
+    sl->size--;
 
     return sln->value;
 }

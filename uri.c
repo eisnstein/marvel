@@ -104,7 +104,7 @@ static char *build_req(uri_maker *self)
     return NULL;
 }
 
-uri_maker *uri_maker_create(const str *query)
+uri_maker *uri_maker_create()
 {
     uri_maker *urm = malloc(sizeof(uri_maker));
     throw_mem_(urm);
@@ -120,7 +120,7 @@ uri_maker *uri_maker_create(const str *query)
 
     urm->ts = str_from("12345");
     urm->endpoint = endpoint;
-    urm->query = str_duplicate(query);
+    urm->query = NULL;
     urm->pr_api_key = pr_api_key;
     urm->pub_api_key = pub_api_key;
     urm->get_hash = get_hash;

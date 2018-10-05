@@ -103,7 +103,7 @@ static int http_connect(http *self, const str *url, const str *port)
     r = http_get_socket_and_connect(self);
     throw_(r == -1, "Could not get socket or connect.");
 
-    return 1;
+    return 0;
 
     error:
     return -1;
@@ -123,7 +123,7 @@ static int http_send(http *self, uri_maker *uri)
 
     free(req);
 
-    return 1;
+    return 0;
 
     error:
     if (req) free(req);
@@ -196,15 +196,76 @@ static int http_response_parse(http_response *self, const str *response_raw)
     throw_(self == NULL, "http_response must be initialised");
     throw_(response_raw == NULL, "raw response cannot be empty");
 
+    char method[10] = { '\0' };
+    char status_code[4] = { '\0' };
+    char status[3] = { '\0' };
+    char line[200] = { '\0' };
+    strlist *headers = strlist_create();
+    str *tmp = NULL;
+
     self->raw = response_raw;
 
-    return 1;
+    const char *data = str_data(response_raw);
+
+    int r = sscanf(data, "%s %s %s\n",
+        method, status_code, status        
+    );
+    throw_(r != 3, "failed to parse first line of response");
+
+    self->status_code = (uint16_t) atoi(status_code);
+
+    // parse headers
+    mtnl(data);
+    while (*data != '\n' && *(data + 1) != '\n') {
+        r = sscanf(data, "%s\n", line);
+        throw_(r != 1, "failed to parse header line");
+
+        tmp = str_from(line);
+        str_strip_nl(tmp);
+
+        strlist_push(headers, tmp);
+        
+        memset(line, '\0', 200);
+        mtnl(data);
+        str_destroy(tmp);
+    }
+
+    self->headers = headers;
+
+    mtnl(data);
+
+    self->body = str_from(data);
+
+    str_destroy(tmp);
+
+    return 0;
 
     error:
+    if (tmp) str_destroy(tmp);
     return -1;
 }
 
 extern void http_response_destroy(http_response *r)
 {
+    if (r == NULL) {
+        return;
+    }
 
+    if (r->raw) {
+        str_destroy(r->raw);
+        r->raw = NULL;
+    }
+
+    if (r->headers) {
+        strlist_destroy(r->headers);
+        r->headers = NULL;
+    }
+
+    if (r->body) {
+        str_destroy(r->body);
+        r->body = NULL;
+    }
+
+    free(r);
+    r = NULL;
 }

@@ -17,7 +17,7 @@ struct uri_maker {
     build_req_func build_req;
 };
 
-uri_maker *uri_maker_create(const str *query);
+uri_maker *uri_maker_create();
 void uri_maker_destroy(uri_maker *self);
 
 #endif
