@@ -5,6 +5,9 @@ marvel
 .env
 output.json
 
+build
+bin
+
 # tests
 tests/*.o
 tests/*_test
