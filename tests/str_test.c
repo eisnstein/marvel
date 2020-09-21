@@ -1,8 +1,8 @@
-#include <assert.h>
+#include "../src/str.h"
+
 #include <stdio.h>
 #include <string.h>
 
-#include "../src/str.h"
 #include "minunit.h"
 
 int tests_run = 0;

@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g -Wall -Wextra -pedantic -Isrc -std=c11
+CFLAGS = -g -Wall -Wextra -pedantic -Isrc -std=c11 # -DNDEBUG
 LDLIBS = -lssl -lcrypto
 
 BUILD_DIR ?= ./build
@@ -24,12 +24,14 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 
 
 .PHONY: tests
-tests: LDLIBS = $(OBJECTS)
 tests: $(TESTS)
 	./tests/runtests.sh
 
 $(TEST_DIR)/str_test: $(TEST_DIR)/str_test.c
 	$(CC) $^ -o $@ $(CFLAGS) build/str.o
+
+$(TEST_DIR)/env_test: $(TEST_DIR)/env_test.c
+	$(CC) $^ -o $@ $(CFLAGS) build/env.o build/str.o
 
 .PHONY: clean
 clean:

@@ -8,9 +8,13 @@
 #include "str.h"
 #include "util.h"
 
-int env_init() {
-  FILE *f = fopen(".env", "r");
-  throw_(f == NULL, "Could not open .env file.");
+int env_init(const char *filename) {
+  if (!filename) {
+    filename = ".env";
+  }
+
+  FILE *f = fopen(filename, "r");
+  throw_v_(f == NULL, "Could not open %s file.", filename);
 
   char *line = NULL;
   size_t len = 0;
@@ -56,9 +60,7 @@ int env_init() {
 
 error:
   str_destroy(envval);
-  if (line)
-    free(line);
-  if (f)
-    fclose(f);
+  if (line) free(line);
+  if (f) fclose(f);
   return -1;
 }

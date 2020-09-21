@@ -16,11 +16,11 @@ int main(int argc, char *argv[]) {
   die_(argc < 2, "Useage: marvel <query>");
 
   // initialise and set env variables
-  int r = env_init();
+  int r = env_init(NULL);
   throw_(r == -1, "something went wrong when setting env variables");
 
   // get query from user input
-  const str *query = str_from(argv[1]);
+  str *query = str_from(argv[1]);
   throw_(str_empty(query), "<query> must not be empty");
 
   // initialise marvel client
@@ -35,10 +35,8 @@ int main(int argc, char *argv[]) {
   return EXIT_SUCCESS;
 
 error:
-  if (query)
-    str_destroy(query);
-  if (marvel)
-    marvel_destroy(marvel);
+  if (query) str_destroy(query);
+  if (marvel) marvel_destroy(marvel);
 
   return EXIT_FAILURE;
 }

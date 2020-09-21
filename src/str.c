@@ -1,8 +1,9 @@
+#include "str.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "str.h"
 #include "util.h"
 
 /**
@@ -41,8 +42,7 @@ str *str_create() {
   return s;
 
 error:
-  if (s)
-    free(s);
+  if (s) free(s);
   return NULL;
 }
 
@@ -97,8 +97,8 @@ str *str_duplicate(const str *s) {
  * @return void
  */
 void str_append(str *s, const char *append, size_t len) {
-  throw_(s == NULL, "String is NULL.");
-  throw_(append == NULL, "String to append is NULL.");
+  throw_(s == NULL, "String to append to cannot be null.");
+  throw_(append == NULL, "String to append cannot be null.");
 
   if (len <= 0) {
     goto error;
@@ -107,7 +107,7 @@ void str_append(str *s, const char *append, size_t len) {
   char *new = NULL;
 
   // calculate the needed size
-  uint32_t new_len = s->len + len;
+  int new_len = s->len + len;
 
   if (new_len >= s->size) {
     new = realloc(s->data, new_len + s->expand);
@@ -165,8 +165,8 @@ error:
  * Put a raw string into an existing string object. Existing data
  * will be overwritten.
  *
- * @param str *s            point to a string object
- * @param const char *put   pointer to data which will be put
+ * @param str *s            pointer to a string object
+ * @param const char *put   pointer to data which will be copied
  * @param size_t len        len of the raw string to copy into
  *
  */
