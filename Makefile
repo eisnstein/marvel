@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g -Wall -Wextra -pedantic -Isrc -std=c11 # -DNDEBUG
+CFLAGS = -g -Wall -Wextra -pedantic -Isrc -std=c11 -DNDEBUG
 LDLIBS = -lssl -lcrypto
 
 BUILD_DIR ?= ./build
@@ -13,7 +13,7 @@ OBJECTS = $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(SOURCES))
 SOURCES_TESTS = $(wildcard $(TEST_DIR)/*_test.c)
 TESTS = $(patsubst %.c,%,$(SOURCES_TESTS))
 
-all: $(TARGET) tests
+all: $(TARGET)
 
 $(TARGET): $(OBJECTS)
 	$(CC) $^ -o $@ $(CFLAGS) $(LDLIBS)
@@ -25,13 +25,14 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 
 .PHONY: tests
 tests: $(TESTS)
-	./tests/runtests.sh
+	echo "created"
+	#./tests/runtests.sh
 
-$(TEST_DIR)/str_test: $(TEST_DIR)/str_test.c
-	$(CC) $^ -o $@ $(CFLAGS) build/str.o
+$(TEST_DIR)/str_test: $(TEST_DIR)/str_test.c $(SRC_DIR)/str.c $(TEST_DIR)/minunit.h
+	$(CC) $< -o $@ $(CFLAGS) build/str.o
 
-$(TEST_DIR)/env_test: $(TEST_DIR)/env_test.c
-	$(CC) $^ -o $@ $(CFLAGS) build/env.o build/str.o
+$(TEST_DIR)/env_test: $(TEST_DIR)/env_test.c $(TEST_DIR)/minunit.h
+	$(CC) $< -o $@ $(CFLAGS) build/env.o build/str.o
 
 .PHONY: clean
 clean:

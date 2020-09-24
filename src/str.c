@@ -8,13 +8,13 @@
 
 /**
  *-------------------------------------------------------------------
- * String object
+ * String
  *-------------------------------------------------------------------
  *
  * This section provides functions for creating and manipulating
  * string objects. String objects hold the raw string data
  * and some additional information about the string, like the
- * current length, the size or the expand rate.
+ * current length, the size and the expand rate.
  * String objects are initialised with an initial size, which means
  * that at creation a specific amount of memory is allocated for
  * the raw data. Should the data inserted be greater, the data
@@ -52,13 +52,12 @@ error:
  *
  * @param const char *string    pointer to a char array
  *
- * @return str                  pointer to a string object
+ * @return str | NULL           pointer to a string object
  */
 str *str_from(const char *string) {
   throw_(string == NULL, "String is NULL.");
 
   size_t len = strlen(string);
-
   str *s = str_create();
 
   // the raw string can just be appended
@@ -73,9 +72,9 @@ error:
 /**
  * Duplicate a string object.
  *
- * @param const str *s  pointer to string object
+ * @param const str *s    pointer to string object
  *
- * @return str          pointer to new string object
+ * @return str | NULL     pointer to new string object
  */
 str *str_duplicate(const str *s) {
   if (s == NULL) {
@@ -107,7 +106,7 @@ void str_append(str *s, const char *append, size_t len) {
   char *new = NULL;
 
   // calculate the needed size
-  int new_len = s->len + len;
+  size_t new_len = s->len + len;
 
   if (new_len >= s->size) {
     new = realloc(s->data, new_len + s->expand);
@@ -145,8 +144,8 @@ strlist *str_split(str *s, const char *delimiter) {
   char *token = strtok(str_data(s), delimiter);
   throw_(token == NULL, "Could not find first token.");
 
-  // if token is not NULL, the token will be pushed onto
-  // the string list
+  // if token is not NULL, the token will be
+  // pushed onto the string list
   while (token != NULL) {
     strlist_push(sl, str_from(token));
 
@@ -158,6 +157,7 @@ strlist *str_split(str *s, const char *delimiter) {
   return sl;
 
 error:
+  if (sl) strlist_destroy(sl);
   return NULL;
 }
 
@@ -185,18 +185,18 @@ void str_put_into(str *s, const char *put, size_t len) {
  *
  * @return void
  */
-void str_destroy(str *s) {
-  if (s == NULL) {
+void str_destroy(str **s) {
+  if (s == NULL || *s == NULL) {
     return;
   }
 
-  if (s->data) {
-    free(s->data);
-    s->data = NULL;
+  if ((*s)->data) {
+    free((*s)->data);
+    (*s)->data = NULL;
   }
 
-  free(s);
-  s = NULL;
+  free(*s);
+  *s = NULL;
 }
 
 /**
@@ -300,6 +300,8 @@ str *strlist_at(strlist *sl, size_t index) {
     sln = sln->next;
   }
 
+  if (sln == NULL) return NULL;
+
   return sln->value;
 }
 
@@ -330,7 +332,7 @@ void strlist_destroy(strlist *sl) {
     node = prev->next;
 
     if (prev->value) {
-      str_destroy(prev->value);
+      str_destroy(&prev->value);
     }
 
     free(prev);

@@ -77,24 +77,24 @@
     }                                                                      \
   } while (0)
 
-#define throw_(A, M)                                                         \
-  do {                                                                       \
-    if ((A)) {                                                               \
-      fprintf(stderr, "[WARNING] %s:%d:%s: %s: " M "\n", __FILE__, __LINE__, \
-              __func__, clean_errno());                                      \
-      errno = 0;                                                             \
-      goto error;                                                            \
-    }                                                                        \
+#define throw_(A, M)                                                           \
+  do {                                                                         \
+    if ((A)) {                                                                 \
+      fprintf(stderr, "[EXCEPTION] %s:%d:%s: %s: " M "\n", __FILE__, __LINE__, \
+              __func__, clean_errno());                                        \
+      errno = 0;                                                               \
+      goto error;                                                              \
+    }                                                                          \
   } while (0)
 
-#define throw_v_(A, M, ...)                                                  \
-  do {                                                                       \
-    if ((A)) {                                                               \
-      fprintf(stderr, "[WARNING] %s:%d:%s: %s: " M "\n", __FILE__, __LINE__, \
-              __func__, clean_errno(), ##__VA_ARGS__);                       \
-      errno = 0;                                                             \
-      goto error;                                                            \
-    }                                                                        \
+#define throw_v_(A, M, ...)                                                    \
+  do {                                                                         \
+    if ((A)) {                                                                 \
+      fprintf(stderr, "[EXCEPTION] %s:%d:%s: %s: " M "\n", __FILE__, __LINE__, \
+              __func__, clean_errno(), ##__VA_ARGS__);                         \
+      errno = 0;                                                               \
+      goto error;                                                              \
+    }                                                                          \
   } while (0)
 
 #define throw_mem_(A)                                 \

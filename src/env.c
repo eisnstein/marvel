@@ -9,12 +9,9 @@
 #include "util.h"
 
 int env_init(const char *filename) {
-  if (!filename) {
+  if (filename == NULL) {
     filename = ".env";
   }
-
-  FILE *f = fopen(filename, "r");
-  throw_v_(f == NULL, "Could not open %s file.", filename);
 
   char *line = NULL;
   size_t len = 0;
@@ -22,11 +19,15 @@ int env_init(const char *filename) {
   int ret = 0;
 
   strlist *list = NULL;
-  str *envval = str_create();
-  throw_(envval == NULL, "Could not create envval string object.");
-
+  str *envval = NULL;
   str *env_key = NULL;
   str *env_value = NULL;
+
+  FILE *f = fopen(filename, "r");
+  throw_v_(f == NULL, "Could not open %s file.", filename);
+
+  envval = str_create();
+  throw_(envval == NULL, "Could not create envval string object.");
 
   // Read every line of the .env file
   // and set the env variable.
@@ -36,10 +37,10 @@ int env_init(const char *filename) {
     // get rid of the <newline> char
     str_strip_nl(envval);
 
+    debug_v_("Len of envval: %ul", str_length(envval));
+
     list = str_split(envval, "=");
-    if (list == NULL) {
-      continue;
-    }
+    throw_(list == NULL, "Could not split env variable.");
 
     env_key = strlist_at(list, 0);
     throw_(env_key == NULL, "Could not get key of env variable.");

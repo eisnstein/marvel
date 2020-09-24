@@ -5,12 +5,10 @@
 
 #include "minunit.h"
 
-int tests_run = 0;
-
-static char *test_read_env_vars() {
+char *test_read_env_vars() {
   int ret = env_init(".env.test");
 
-  mu_assert(ret == 0, "Return value is not 0");
+  mu_assert(ret == 0, "Something went wrong parsing the .env.test file");
   mu_assert(strcmp(getenv("MARVEL_BASE_URL"), "http://gateway.marvel.com") == 0,
             "Url does not match");
   mu_assert(strcmp(getenv("MARVEL_BASE_ENDPOINT"), "/v1/public") == 0,
@@ -23,7 +21,7 @@ static char *test_read_env_vars() {
   return NULL;
 }
 
-static char *all_tests() {
+char *all_tests() {
   mu_suite_start();
 
   mu_run_test(test_read_env_vars);
