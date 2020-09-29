@@ -1,6 +1,7 @@
 #ifndef __str_h__
 #define __str_h__
 
+#include <stdbool.h>
 #include <stddef.h>
 
 #define STR_INITIAL_SIZE (32 * 1)
@@ -52,15 +53,16 @@ typedef struct strlist {
 
 str *str_create();
 str *str_from(const char *s);
+str *str_duplicate(const str *s);
 void str_append(str *s, const char *append, size_t len);
 strlist *str_split(str *s, const char *delimiter);
 void str_put_into(str *s, const char *put, size_t len);
 void str_destroy(str **s);
 
 strlist *strlist_create();
-void *strlist_push(strlist *sl, str *value);
+bool strlist_push(strlist *sl, str *value);
 str *strlist_pop(strlist *sl);
 str *strlist_at(strlist *sl, size_t index);
-void strlist_destroy(strlist *sl);
+void strlist_destroy(strlist **sl);
 
 #endif

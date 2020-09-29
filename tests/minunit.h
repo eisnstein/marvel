@@ -37,7 +37,7 @@
 #define RUN_TESTS(name)                         \
   int main(int argc, char *argv[]) {            \
     argc = 1;                                   \
-    printf("------\n");                         \
+    printf("%d------\n", argc);                 \
     printf("Running Test Suit: %s\n", argv[0]); \
     char *result = name();                      \
     if (result != 0) {                          \

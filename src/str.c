@@ -1,5 +1,6 @@
 #include "str.h"
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -147,17 +148,19 @@ strlist *str_split(str *s, const char *delimiter) {
   // if token is not NULL, the token will be
   // pushed onto the string list
   while (token != NULL) {
-    strlist_push(sl, str_from(token));
+    str *t = str_from(token);
+    strlist_push(sl, t);
+
+    str_destroy(&t);
 
     // get the next token
     token = strtok(NULL, delimiter);
-    debug_v_("token: %s", token);
   }
 
   return sl;
 
 error:
-  if (sl) strlist_destroy(sl);
+  if (sl) strlist_destroy(&sl);
   return NULL;
 }
 
@@ -169,6 +172,7 @@ error:
  * @param const char *put   pointer to data which will be copied
  * @param size_t len        len of the raw string to copy into
  *
+ * @return void
  */
 void str_put_into(str *s, const char *put, size_t len) {
   // to copy / overwrite the existing data, we just set
@@ -181,7 +185,7 @@ void str_put_into(str *s, const char *put, size_t len) {
 /**
  * Destroy (free) a string object.
  *
- * @param str *s    pointer to a string object
+ * @param str **s    pointer to a pointer to a string object
  *
  * @return void
  */
@@ -233,17 +237,20 @@ error:
 
 /**
  * Push / append a string object at the end of the string list.
+ * The str object will copied into a new str object.
  *
  * @param strlist *sl   pointer to a string list
  * @param str *value    pointer to a string object
  *
- * @return NULL
+ * @return bool         true on success / false on error
  */
-void *strlist_push(strlist *sl, str *value) {
+bool strlist_push(strlist *sl, str *value) {
   strlistnode *sln = malloc(sizeof(strlistnode));
   throw_mem_(sln);
 
   sln->value = str_duplicate(value);
+  throw_(sln->value == NULL, "Could not copy str into strlist.");
+
   sln->next = NULL;
   sln->prev = NULL;
 
@@ -259,8 +266,11 @@ void *strlist_push(strlist *sl, str *value) {
 
   sl->size++;
 
+  return true;
+
 error:
-  return NULL;
+  if (sln) free(sln);
+  return false;
 }
 
 /**
@@ -288,10 +298,9 @@ str *strlist_pop(strlist *sl) {
  * @return str | NULL   pointer to a string object
  */
 str *strlist_at(strlist *sl, size_t index) {
+  if (sl == NULL) return NULL;
   // return if index is bigger than the actual size of the list
-  if (sl->size - 1 < index) {
-    return NULL;
-  }
+  if (sl->size - 1 < index) return NULL;
 
   strlistnode *sln = sl->head;
 
@@ -308,30 +317,32 @@ str *strlist_at(strlist *sl, size_t index) {
 /**
  * Destroy (free) a string list.
  *
- * @param strlist *sl   pointer to a string list
+ * @param strlist **sl   pointer to a string list
  *
  * @return void
  */
-void strlist_destroy(strlist *sl) {
-  if (sl == NULL) {
+void strlist_destroy(strlist **sl) {
+  if (sl == NULL || *sl == NULL) {
     return;
   }
 
   // if list is empty, just free list and return
-  if (strlist_empty(sl)) {
-    free(sl);
-    sl = NULL;
+  if (strlist_empty((*sl))) {
+    free(*sl);
+    *sl = NULL;
     return;
   }
 
-  strlistnode *prev = sl->head;
-  // need a second reference to free the node but not lose the next node
+  strlistnode *prev = (*sl)->head;
+  // need a second reference to free the node
+  // but not lose the next node
   strlistnode *node = NULL;
 
   while (prev != NULL) {
     node = prev->next;
 
     if (prev->value) {
+      // str *s = prev->value;
       str_destroy(&prev->value);
     }
 
@@ -340,6 +351,6 @@ void strlist_destroy(strlist *sl) {
     prev = node;
   }
 
-  free(sl);
-  sl = NULL;
+  free(*sl);
+  *sl = NULL;
 }
