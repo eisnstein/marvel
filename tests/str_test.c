@@ -168,6 +168,14 @@ char *test_str_from() {
 
   str_destroy(&s);
 
+  str *s2 = str_from(NULL);
+  mu_assert(s2 == NULL, "String should be null");
+
+  s2 = str_from("");
+  mu_assert(s2 != NULL, "String should not be null");
+
+  str_destroy(&s2);
+
   return NULL;
 }
 
@@ -201,9 +209,12 @@ char *test_str_append() {
   size_t append_2_len = strlen(append_2);
 
   str *s = str_create();
+  bool r = false;
 
-  str_append(s, initial_str, initial_str_len);
-  str_append(s, append_1, append_1_len);
+  r = str_append(s, initial_str, initial_str_len);
+  mu_assert(r == true, "Result should be 'true', but got 'false'");
+  r = str_append(s, append_1, append_1_len);
+  mu_assert(r == true, "Result should be 'true', but got 'false'");
 
   size_t sum_len = initial_str_len + append_1_len;
 
@@ -215,7 +226,8 @@ char *test_str_append() {
               s->size);
 
   sum_len = sum_len + append_2_len;
-  str_append(s, append_2, append_2_len);
+  r = str_append(s, append_2, append_2_len);
+  mu_assert(r == true, "Result should be true, but got false");
 
   mu_assert_v(str_length(s) == sum_len,
               "String length should be %zu, but is %zu", sum_len,
@@ -226,6 +238,15 @@ char *test_str_append() {
               STR_INITIAL_SIZE + STR_EXPAND, s->size);
 
   str_destroy(&s);
+
+  str *s2 = str_create();
+  r = str_append(s2, NULL, 10);
+  mu_assert(r == false, "Result should be 'false', but is 'true'");
+
+  r = str_append(s2, "append", 0);
+  mu_assert(r == true, "Result should be 'true', but is 'false'");
+
+  str_destroy(&s2);
 
   return NULL;
 }
