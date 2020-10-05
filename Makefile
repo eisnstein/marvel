@@ -28,10 +28,10 @@ tests: $(TESTS)
 	echo "created"
 	#./tests/runtests.sh
 
-$(TEST_DIR)/str_test: $(TEST_DIR)/str_test.c $(SRC_DIR)/str.c $(TEST_DIR)/minunit.h
+$(TEST_DIR)/str_test: $(TEST_DIR)/str_test.c $(SRC_DIR)/str.c
 	$(CC) $< -o $@ $(CFLAGS) build/str.o
 
-$(TEST_DIR)/env_test: $(TEST_DIR)/env_test.c $(TEST_DIR)/minunit.h
+$(TEST_DIR)/env_test: $(TEST_DIR)/env_test.c $(SRC_DIR)/env.c
 	$(CC) $< -o $@ $(CFLAGS) build/env.o build/str.o
 
 .PHONY: clean

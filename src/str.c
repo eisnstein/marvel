@@ -145,7 +145,11 @@ strlist *str_split(str *s, const char *delimiter) {
 
   // get the first token
   char *token = strtok(str_data(s), delimiter);
-  throw_(token == NULL, "Could not find first token.");
+  if (token == NULL) {
+    debug_v_("Could not split '%s' with delimiter '%s'", str_data(s),
+             delimiter);
+    goto error;
+  }
 
   str *t = NULL;
 

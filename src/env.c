@@ -1,4 +1,5 @@
 #define _GNU_SOURCE
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -8,7 +9,7 @@
 #include "str.h"
 #include "util.h"
 
-int env_init(const char *filename) {
+bool env_init(const char *filename) {
   if (filename == NULL) {
     filename = ".env";
   }
@@ -32,15 +33,15 @@ int env_init(const char *filename) {
   // Read every line of the .env file
   // and set the env variable.
   while ((read = getline(&line, &len, f)) != -1) {
-    str_put_into(envval, line, read);
+    if (line[0] == '\n') continue;
+
+    str_put_into(envval, line);
 
     // get rid of the <newline> char
     str_strip_nl(envval);
 
-    debug_v_("Len of envval: %ul", str_length(envval));
-
     list = str_split(envval, "=");
-    throw_(list == NULL, "Could not split env variable.");
+    if (list == NULL) continue;
 
     env_key = strlist_at(list, 0);
     throw_(env_key == NULL, "Could not get key of env variable.");
@@ -51,17 +52,17 @@ int env_init(const char *filename) {
     ret = setenv(str_data(env_key), str_data(env_value), 1);
     throw_(ret == -1, "Could not set env variable.");
 
-    strlist_destroy(list);
+    strlist_destroy(&list);
   }
 
-  str_destroy(envval);
+  str_destroy(&envval);
   free(line);
   fclose(f);
-  return 0;
+  return true;
 
 error:
-  str_destroy(envval);
+  if (envval) str_destroy(&envval);
   if (line) free(line);
   if (f) fclose(f);
-  return -1;
+  return false;
 }

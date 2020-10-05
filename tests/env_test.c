@@ -8,7 +8,7 @@
 char *test_read_env_vars() {
   int ret = env_init(".env.test");
 
-  mu_assert(ret == 0, "Something went wrong parsing the .env.test file");
+  mu_assert(ret == true, "Something went wrong parsing the .env.test file");
   mu_assert(strcmp(getenv("MARVEL_BASE_URL"), "http://gateway.marvel.com") == 0,
             "Url does not match");
   mu_assert(strcmp(getenv("MARVEL_BASE_ENDPOINT"), "/v1/public") == 0,
