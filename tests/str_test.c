@@ -211,9 +211,9 @@ char *test_str_append() {
   str *s = str_create();
   bool r = false;
 
-  r = str_append(s, initial_str, initial_str_len);
+  r = str_append(s, initial_str);
   mu_assert(r == true, "Result should be 'true', but got 'false'");
-  r = str_append(s, append_1, append_1_len);
+  r = str_append(s, append_1);
   mu_assert(r == true, "Result should be 'true', but got 'false'");
 
   size_t sum_len = initial_str_len + append_1_len;
@@ -226,7 +226,7 @@ char *test_str_append() {
               s->size);
 
   sum_len = sum_len + append_2_len;
-  r = str_append(s, append_2, append_2_len);
+  r = str_append(s, append_2);
   mu_assert(r == true, "Result should be true, but got false");
 
   mu_assert_v(str_length(s) == sum_len,
@@ -240,11 +240,8 @@ char *test_str_append() {
   str_destroy(&s);
 
   str *s2 = str_create();
-  r = str_append(s2, NULL, 10);
+  r = str_append(s2, NULL);
   mu_assert(r == false, "Result should be 'false', but is 'true'");
-
-  r = str_append(s2, "append", 0);
-  mu_assert(r == true, "Result should be 'true', but is 'false'");
 
   str_destroy(&s2);
 
@@ -270,6 +267,19 @@ char *test_str_split() {
   return NULL;
 }
 
+char *test_str_put_into() {
+  str *s = str_from("some string");
+
+  bool res = str_put_into(s, "another string");
+
+  mu_assert(res == true, "Should be true, but is false");
+  mu_assert(strcmp(str_data(s), "another string") == 0, "String not same");
+
+  str_destroy(&s);
+
+  return NULL;
+}
+
 char *all_tests() {
   mu_suite_start();
 
@@ -284,6 +294,7 @@ char *all_tests() {
   mu_run_test(test_str_duplicate);
   mu_run_test(test_str_append);
   mu_run_test(test_str_split);
+  mu_run_test(test_str_put_into);
 
   mu_run_test(test_strlist_push);
   mu_run_test(test_strlist_at);

@@ -56,17 +56,20 @@ error:
  * @return str | NULL           pointer to a string object
  */
 str *str_from(const char *string) {
+  str *s = NULL;
   throw_(string == NULL, "String is NULL.");
 
-  size_t len = strlen(string);
-  str *s = str_create();
+  s = str_create();
+  throw_(s == NULL, "Could not create str.");
 
   // the raw string can just be appended
-  str_append(s, string, len);
+  bool res = str_append(s, string);
+  throw_(res == false, "Could not append str.");
 
   return s;
 
 error:
+  if (s) str_destroy(&s);
   return NULL;
 }
 
@@ -94,20 +97,17 @@ str *str_duplicate(const str *s) {
  * @param const char *append    pointer to a char array
  * @param size_t len            string length of the char array
  *
- * @return void
+ * @return bool                 true on success / false on error
  */
-void str_append(str *s, const char *append, size_t len) {
+bool str_append(str *s, const char *append) {
   throw_(s == NULL, "String to append to cannot be null.");
   throw_(append == NULL, "String to append cannot be null.");
 
-  if (len <= 0) {
-    goto error;
-  }
-
+  size_t len = strlen(append);
   char *new = NULL;
 
   // calculate the needed size
-  size_t new_len = s->len + len;
+  size_t new_len = str_length(s) + len;
 
   if (new_len >= s->size) {
     new = realloc(s->data, new_len + s->expand);
@@ -123,8 +123,10 @@ void str_append(str *s, const char *append, size_t len) {
   s->data = new;
   s->len = new_len;
 
+  return true;
+
 error:
-  return;
+  return false;
 }
 
 /**
@@ -145,10 +147,12 @@ strlist *str_split(str *s, const char *delimiter) {
   char *token = strtok(str_data(s), delimiter);
   throw_(token == NULL, "Could not find first token.");
 
+  str *t = NULL;
+
   // if token is not NULL, the token will be
   // pushed onto the string list
   while (token != NULL) {
-    str *t = str_from(token);
+    t = str_from(token);
     strlist_push(sl, t);
 
     str_destroy(&t);
@@ -172,14 +176,14 @@ error:
  * @param const char *put   pointer to data which will be copied
  * @param size_t len        len of the raw string to copy into
  *
- * @return void
+ * @return bool             true on success / false on error
  */
-void str_put_into(str *s, const char *put, size_t len) {
+bool str_put_into(str *s, const char *put) {
   // to copy / overwrite the existing data, we just set
   // the len to 0, so that the new string will be copied
   // to the beginning
   s->len = 0;
-  str_append(s, put, len);
+  return str_append(s, put);
 }
 
 /**

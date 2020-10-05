@@ -54,9 +54,9 @@ typedef struct strlist {
 str *str_create();
 str *str_from(const char *s);
 str *str_duplicate(const str *s);
-void str_append(str *s, const char *append, size_t len);
+bool str_append(str *s, const char *append);
 strlist *str_split(str *s, const char *delimiter);
-void str_put_into(str *s, const char *put, size_t len);
+bool str_put_into(str *s, const char *put);
 void str_destroy(str **s);
 
 strlist *strlist_create();
