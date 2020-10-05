@@ -271,9 +271,12 @@ char *test_str_put_into() {
   str *s = str_from("some string");
 
   bool res = str_put_into(s, "another string");
-
   mu_assert(res == true, "Should be true, but is false");
   mu_assert(strcmp(str_data(s), "another string") == 0, "String not same");
+
+  res = str_put_into(s, "");
+  mu_assert(res == true, "Should be true, but is false");
+  mu_assert(strcmp(str_data(s), "") == 0, "String not same");
 
   str_destroy(&s);
 
