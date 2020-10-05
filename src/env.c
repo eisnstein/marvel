@@ -25,10 +25,10 @@ bool env_init(const char *filename) {
   str *env_value = NULL;
 
   FILE *f = fopen(filename, "r");
-  throw_v_(f == NULL, "Could not open %s file.", filename);
+  throw_v_(f == NULL, "Could not open %s file", filename);
 
   envval = str_create();
-  throw_(envval == NULL, "Could not create envval string object.");
+  throw_(envval == NULL, "Could not create envval string object");
 
   // Read every line of the .env file
   // and set the env variable.
@@ -44,7 +44,7 @@ bool env_init(const char *filename) {
     if (list == NULL) continue;
 
     env_key = strlist_at(list, 0);
-    throw_(env_key == NULL, "Could not get key of env variable.");
+    throw_(env_key == NULL, "Could not get key of env variable");
 
     env_value = strlist_at(list, 1);
     throw_(env_value == NULL, "Could not get value of env variable.");

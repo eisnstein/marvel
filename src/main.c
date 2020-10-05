@@ -1,4 +1,5 @@
 #define _GNU_SOURCE
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -9,34 +10,34 @@
 #include "uri.h"
 #include "util.h"
 
-#define VERSION "0.0.1"
+#define VERSION "0.0.2"
 
 int main(int argc, char *argv[]) {
   // check if useage
-  die_(argc < 2, "Useage: marvel <query>");
-
-  // initialise and set env variables
-  int r = env_init(NULL);
-  throw_(r == -1, "something went wrong when setting env variables");
+  die_(argc < 2, "Usage: marvel <query>");
 
   // get query from user input
   str *query = str_from(argv[1]);
   throw_(str_empty(query), "<query> must not be empty");
 
+  // initialise and set env variables
+  bool res = env_init(NULL);
+  throw_(res == false, "Something went wrong when setting env variables");
+
   // initialise marvel client
   marvel *marvel = marvel_create();
-  throw_(marvel == NULL, "could not create marvel client");
+  throw_(marvel == NULL, "Could not create marvel client");
 
-  r = marvel_request(marvel, query);
-  throw_(r == -1, "something went wrong when making request to marvel");
+  res = marvel_request(marvel, query);
+  throw_(res == false, "Something went wrong when making request to marvel");
 
-  marvel_destroy(marvel);
+  marvel_destroy(&marvel);
 
   return EXIT_SUCCESS;
 
 error:
-  if (query) str_destroy(query);
-  if (marvel) marvel_destroy(marvel);
+  if (query) str_destroy(&query);
+  if (marvel) marvel_destroy(&marvel);
 
   return EXIT_FAILURE;
 }

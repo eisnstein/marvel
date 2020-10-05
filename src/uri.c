@@ -1,10 +1,11 @@
+#include "uri.h"
+
 #include <openssl/evp.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include "marvel.h"
-#include "uri.h"
 #include "util.h"
 
 /**
@@ -21,9 +22,9 @@ static inline str *generate_payload(uri_maker *self) {
   str *out = str_create();
   throw_mem_(out);
 
-  str_append(out, str_data(self->ts), str_length(self->ts));
-  str_append(out, str_data(self->pr_api_key), str_length(self->pr_api_key));
-  str_append(out, str_data(self->pub_api_key), str_length(self->pub_api_key));
+  str_append(out, str_data(self->ts));
+  str_append(out, str_data(self->pr_api_key));
+  str_append(out, str_data(self->pub_api_key));
 
   return out;
 
@@ -64,11 +65,12 @@ static char *get_hash(uri_maker *self) {
     sprintf(&hash[i * 2], "%02x", md_value[i]);
   }
 
-  str_destroy(hash_payload);
+  str_destroy(&hash_payload);
 
   return hash;
 
 error:
+  if (hash) free(hash);
   return NULL;
 }
 
@@ -101,13 +103,13 @@ uri_maker *uri_maker_create() {
   uri_maker *urm = malloc(sizeof(uri_maker));
   throw_mem_(urm);
 
-  const str *endpoint = str_from(getenv(MARVEL_BASE_ENDPOINT));
+  str *endpoint = str_from(getenv(MARVEL_BASE_ENDPOINT));
   throw_(endpoint == NULL, "Could not get base endpoint from env.");
 
-  const str *pr_api_key = str_from(getenv(MARVEL_PRIVATE_KEY));
+  str *pr_api_key = str_from(getenv(MARVEL_PRIVATE_KEY));
   throw_(pr_api_key == NULL, "Could not get private key from env.");
 
-  const str *pub_api_key = str_from(getenv(MARVEL_PUBLIC_KEY));
+  str *pub_api_key = str_from(getenv(MARVEL_PUBLIC_KEY));
   throw_(pub_api_key == NULL, "Could not get public key from env.");
 
   urm->ts = str_from("12345");
@@ -124,19 +126,19 @@ error:
   return NULL;
 }
 
-void uri_maker_destroy(uri_maker *self) {
-  if (self == NULL) {
+void uri_maker_destroy(uri_maker **self) {
+  if (*self == NULL) {
     return;
   }
 
-  str_destroy(self->ts);
-  str_destroy(self->endpoint);
-  str_destroy(self->query);
-  str_destroy(self->pr_api_key);
-  str_destroy(self->pub_api_key);
+  str_destroy(&(*self)->ts);
+  str_destroy(&(*self)->endpoint);
+  str_destroy(&(*self)->query);
+  str_destroy(&(*self)->pr_api_key);
+  str_destroy(&(*self)->pub_api_key);
 
-  if (self) {
-    free(self);
-    self = NULL;
+  if (*self) {
+    free(*self);
+    *self = NULL;
   }
 }

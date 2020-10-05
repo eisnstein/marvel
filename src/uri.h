@@ -8,16 +8,16 @@ typedef char *(*hasher_func)(uri_maker *self);
 typedef char *(*build_req_func)(uri_maker *self);
 
 struct uri_maker {
-  const str *endpoint;
-  const str *query;
-  const str *ts;
-  const str *pr_api_key;
-  const str *pub_api_key;
+  str *endpoint;
+  str *query;
+  str *ts;
+  str *pr_api_key;
+  str *pub_api_key;
   hasher_func get_hash;
   build_req_func build_req;
 };
 
 uri_maker *uri_maker_create();
-void uri_maker_destroy(uri_maker *self);
+void uri_maker_destroy(uri_maker **self);
 
 #endif
