@@ -13,6 +13,8 @@
 #define VERSION "0.0.2"
 
 int main(int argc, char *argv[]) {
+  marvel *marvel = NULL;
+
   // check if useage
   die_(argc < 2, "Usage: marvel <query>");
 
@@ -22,10 +24,10 @@ int main(int argc, char *argv[]) {
 
   // initialise and set env variables
   bool res = env_init(NULL);
-  throw_(res == false, "Something went wrong when setting env variables");
+  throw_(res == false, "Could not initialize env variables");
 
   // initialise marvel client
-  marvel *marvel = marvel_create();
+  marvel = marvel_create();
   throw_(marvel == NULL, "Could not create marvel client");
 
   res = marvel_request(marvel, query);

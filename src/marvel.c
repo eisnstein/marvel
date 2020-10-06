@@ -12,7 +12,7 @@ marvel *marvel_create() {
   marvel *m = malloc(sizeof(marvel));
   throw_mem_(m);
 
-  m->client = http_create_client();
+  m->client = http_create();
   throw_(m->client == NULL, "Could not create http client");
 
   m->uri_maker = uri_maker_create();
@@ -27,25 +27,25 @@ error:
 }
 
 bool marvel_request(marvel *self, str *query) {
-  int r = 0;
+  bool r = false;
   http_response *http_response = NULL;
 
   str *url = str_from(getenv(MARVEL_BASE_URL));
   throw_(url == NULL, "Could not get base url from env");
 
   // connect to marvel api
-  r = self->client->http_connect(self->client, url, NULL);
-  throw_v_(r == -1, "Could not connect to %s", str_data(url));
+  r = http_connect(self->client, url, NULL);
+  throw_v_(r == false, "Could not connect to %s", str_data(url));
 
   // set query on uri_maker
   self->uri_maker->query = query;
 
   // send the request to marvel
-  r = self->client->http_send(self->client, self->uri_maker);
+  r = http_send(self->client, self->uri_maker);
   throw_(r == -1, "Could not send request to marvel");
 
   // receive response from marvel
-  str *response_raw = self->client->http_receive(self->client);
+  str *response_raw = http_receive(self->client);
   throw_(response_raw == NULL, "Could not receive data");
 
   debug_v_("size of response: %ld", str_length(response_raw));
@@ -53,7 +53,7 @@ bool marvel_request(marvel *self, str *query) {
   http_response = http_response_create();
   throw_(http_response == NULL, "Could not create http response object");
 
-  r = http_response->http_response_parse(http_response, response_raw);
+  r = http_response_parse(http_response, response_raw);
   throw_(r == -1, "Could not parse http response");
 
   // write response into file

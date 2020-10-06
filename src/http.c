@@ -13,14 +13,10 @@
 
 #include "util.h"
 
-static bool http_get_address_info(http *self);
+static bool http_get_address_info(http *client);
 static inline void *get_in_addr(struct sockaddr *sa);
-static int http_connect(http *self, str *url, str *port);
-static int http_send(http *self, uri_maker *uri);
-static str *http_receive(http *self);
-static int http_response_parse(http_response *self, str *response_raw);
 
-extern http *http_create_client() {
+http *http_create() {
   http *h = malloc(sizeof(http));
   throw_mem_(h);
 
@@ -29,9 +25,6 @@ extern http *http_create_client() {
   h->res = NULL;
   h->url = NULL;
   h->port = NULL;
-  h->http_connect = http_connect;
-  h->http_send = http_send;
-  h->http_receive = http_receive;
 
   return h;
 
@@ -39,7 +32,7 @@ error:
   return NULL;
 }
 
-static bool http_get_address_info(http *self) {
+static bool http_get_address_info(http *client) {
   int status = 0;
   struct addrinfo hints;
 
@@ -47,10 +40,10 @@ static bool http_get_address_info(http *self) {
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
 
-  status = getaddrinfo(str_data(self->url), str_data(self->port), &hints,
-                       &self->res);
+  status = getaddrinfo(str_data(client->url), str_data(client->port), &hints,
+                       &client->res);
   throw_(status != 0, "Could not get address info");
-  throw_(self->res == NULL, "Could not get address info");
+  throw_(client->res == NULL, "Could not get address info");
 
   return true;
 
@@ -66,20 +59,20 @@ static inline void *get_in_addr(struct sockaddr *sa) {
   return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
-static int http_get_socket_and_connect(http *self) {
+static bool http_get_socket_and_connect(http *client) {
   struct addrinfo *p;
   char ipstr[INET6_ADDRSTRLEN];
 
-  for (p = self->res; p != NULL; p = p->ai_next) {
-    if ((self->sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) ==
-        -1) {
+  for (p = client->res; p != NULL; p = p->ai_next) {
+    if ((client->sockfd =
+             socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
       perror("client: socket");
       continue;
     }
 
-    if ((self->connection = connect(self->sockfd, p->ai_addr, p->ai_addrlen)) ==
-        -1) {
-      close(self->sockfd);
+    if ((client->connection =
+             connect(client->sockfd, p->ai_addr, p->ai_addrlen)) == -1) {
+      close(client->sockfd);
       perror("client: connect");
       continue;
     }
@@ -91,60 +84,58 @@ static int http_get_socket_and_connect(http *self) {
             sizeof(ipstr));
   debug_v_("client: connecting to %s", ipstr);
 
-  freeaddrinfo(self->res);
+  freeaddrinfo(client->res);
 
-  return 1;
+  return true;
 }
 
-static int http_connect(http *self, str *url, str *port) {
-  throw_(self == NULL, "self is NULL.");
-  throw_(url == NULL, "Please provide url.");
+bool http_connect(http *client, str *url, str *port) {
+  throw_(client == NULL, "No http client provided");
+  throw_(url == NULL, "No URL provided");
 
-  int r = 0;
+  client->url = url;
+  client->port = port ? port : str_from(DEFAULT_PORT);
 
-  self->url = url;
-  self->port = port ? port : str_from(DEFAULT_PORT);
-
-  bool res = http_get_address_info(self);
+  bool res = http_get_address_info(client);
   throw_(res == false, "Could not get address info");
 
-  r = http_get_socket_and_connect(self);
-  throw_(r == -1, "Could not get socket or connect");
+  res = http_get_socket_and_connect(client);
+  throw_(res == false, "Could not get socket or connect");
 
-  return 0;
+  return true;
 
 error:
-  return -1;
+  return false;
 }
 
-static int http_send(http *self, uri_maker *uri) {
+bool http_send(http *client, uri_maker *urim) {
   ssize_t bytes_sent = 0;
 
   // build the request
-  char *req = uri->build_req(uri);
+  char *req = uri_maker_build_req(urim);
 
   debug_v_("req:\n%s", req);
 
-  bytes_sent = send(self->sockfd, req, strlen(req), 0);
+  bytes_sent = send(client->sockfd, req, strlen(req), 0);
   throw_(bytes_sent == -1, "Could not send request.");
 
   free(req);
 
-  return 0;
+  return true;
 
 error:
   if (req) free(req);
-  return -1;
+  return false;
 }
 
-static str *http_receive(http *self) {
+str *http_receive(http *client) {
   char buf[MAXDATASIZE];
   str *response_raw = str_create();
   throw_(response_raw == NULL, "Could not create string.");
 
   ssize_t bytes_received = 0;
   do {
-    bytes_received = recv(self->sockfd, buf, MAXDATASIZE, 0);
+    bytes_received = recv(client->sockfd, buf, MAXDATASIZE, 0);
     throw_(bytes_received == -1, "Could not receive data.");
 
     str_append(response_raw, buf);
@@ -178,7 +169,11 @@ extern void http_destroy(http **self) {
   *self = NULL;
 }
 
-extern http_response *http_response_create() {
+/**
+ * HTTP Response
+ */
+
+http_response *http_response_create() {
   http_response *r = malloc(sizeof(http_response));
   throw_mem_(r);
 
@@ -186,7 +181,6 @@ extern http_response *http_response_create() {
   r->status_code = 0;
   r->body = NULL;
   r->headers = NULL;
-  r->http_response_parse = http_response_parse;
 
   return r;
 
@@ -194,8 +188,9 @@ error:
   return NULL;
 }
 
-static int http_response_parse(http_response *self, str *response_raw) {
-  throw_(self == NULL, "http_response must be initialised");
+bool http_response_parse(http_response *response, str *response_raw) {
+  str *tmp = NULL;
+  throw_(response == NULL, "http_response must be initialised");
   throw_(response_raw == NULL, "raw response cannot be empty");
 
   char method[10] = {'\0'};
@@ -203,16 +198,15 @@ static int http_response_parse(http_response *self, str *response_raw) {
   char status[3] = {'\0'};
   char line[200] = {'\0'};
   strlist *headers = strlist_create();
-  str *tmp = NULL;
 
-  self->raw = response_raw;
+  response->raw = response_raw;
 
   char *data = str_data(response_raw);
 
   int r = sscanf(data, "%s %s %s\n", method, status_code, status);
   throw_(r != 3, "failed to parse first line of response");
 
-  self->status_code = (uint16_t)atoi(status_code);
+  response->status_code = (uint16_t)atoi(status_code);
 
   // parse headers
   mtnl(data);
@@ -230,22 +224,22 @@ static int http_response_parse(http_response *self, str *response_raw) {
     str_destroy(&tmp);
   }
 
-  self->headers = headers;
+  response->headers = headers;
 
   mtnl(data);
 
-  self->body = str_from(data);
+  response->body = str_from(data);
 
   str_destroy(&tmp);
 
-  return 0;
+  return true;
 
 error:
   if (tmp) str_destroy(&tmp);
-  return -1;
+  return false;
 }
 
-extern void http_response_destroy(http_response **r) {
+void http_response_destroy(http_response **r) {
   if (*r == NULL) {
     return;
   }

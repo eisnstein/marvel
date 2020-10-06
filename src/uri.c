@@ -12,19 +12,19 @@
  * Generates the payload which will be md5 hashed.
  * From marvel documentation: md5(ts + privateKey + publicKey)
  *
- * @param uri_maker *self   pointer to uri maker
+ * @param uri_maker *urim     URI maker
  *
  * @return str | NULL
  */
-static inline str *generate_payload(uri_maker *self) {
-  throw_(self == NULL, "self is NULL.");
+static inline str *generate_payload(uri_maker *urim) {
+  throw_(urim == NULL, "No URI maker provided");
 
   str *out = str_create();
   throw_mem_(out);
 
-  str_append(out, str_data(self->ts));
-  str_append(out, str_data(self->pr_api_key));
-  str_append(out, str_data(self->pub_api_key));
+  str_append(out, str_data(urim->ts));
+  str_append(out, str_data(urim->pr_api_key));
+  str_append(out, str_data(urim->pub_api_key));
 
   return out;
 
@@ -39,8 +39,9 @@ error:
  *
  * @return *char
  */
-static char *get_hash(uri_maker *self) {
-  throw_(self == NULL, "self is NULL.");
+static char *generate_hash(uri_maker *urim) {
+  char *hash = NULL;
+  throw_(urim == NULL, "No URI make provided");
 
   EVP_MD_CTX *mdctx;
   const EVP_MD *md;
@@ -48,10 +49,10 @@ static char *get_hash(uri_maker *self) {
   unsigned int md_len, i;
   str *hash_payload = NULL;
 
-  char *hash = calloc(1, EVP_MAX_MD_SIZE + 1);
+  hash = calloc(1, EVP_MAX_MD_SIZE + 1);
   throw_mem_(hash);
 
-  hash_payload = generate_payload(self);
+  hash_payload = generate_payload(urim);
   throw_(hash_payload == NULL, "Could not generate hash payload.");
 
   md = EVP_get_digestbyname("MD5");
@@ -74,28 +75,28 @@ error:
   return NULL;
 }
 
-/**
- * Build
- */
-static char *build_req(uri_maker *self) {
-  throw_(self == NULL, "self is NULL.");
+char *uri_maker_build_req(uri_maker *urim) {
+  char *hash = NULL;
+  throw_(urim == NULL, "No URI maker provided");
 
-  char *hash = self->get_hash(self);
+  hash = generate_hash(urim);
   char *req = calloc(1024, 1);
+  throw_mem_(req);
 
   sprintf(req,
           "GET %s/%s?ts=%s&apikey=%s&hash=%s&limit=2 HTTP/1.1\r\n"
           "Host: gateway.marvel.com\r\n"
           "User-Agent: curl/7.58.0\r\n"
           "Accept: */*\r\n\r\n",
-          str_data(self->endpoint), str_data(self->query), str_data(self->ts),
-          str_data(self->pub_api_key), hash);
+          str_data(urim->endpoint), str_data(urim->query), str_data(urim->ts),
+          str_data(urim->pub_api_key), hash);
 
   free(hash);
 
   return req;
 
 error:
+  if (hash) free(hash);
   return NULL;
 }
 
@@ -117,8 +118,6 @@ uri_maker *uri_maker_create() {
   urm->query = NULL;
   urm->pr_api_key = pr_api_key;
   urm->pub_api_key = pub_api_key;
-  urm->get_hash = get_hash;
-  urm->build_req = build_req;
 
   return urm;
 
