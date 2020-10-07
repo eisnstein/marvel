@@ -69,7 +69,7 @@ str *str_from(const char *string) {
   return s;
 
 error:
-  if (s) str_destroy(&s);
+  if (s) str_free(s);
   return NULL;
 }
 
@@ -159,7 +159,7 @@ strlist *str_split(str *s, const char *delimiter) {
     t = str_from(token);
     strlist_push(sl, t);
 
-    str_destroy(&t);
+    str_free(t);
 
     // get the next token
     token = strtok(NULL, delimiter);
@@ -168,7 +168,7 @@ strlist *str_split(str *s, const char *delimiter) {
   return sl;
 
 error:
-  if (sl) strlist_destroy(&sl);
+  if (sl) strlist_free(sl);
   return NULL;
 }
 
@@ -197,18 +197,17 @@ bool str_put_into(str *s, const char *put) {
  *
  * @return void
  */
-void str_destroy(str **s) {
-  if (s == NULL || *s == NULL) {
+void str_destroy(str *s) {
+  if (s == NULL) {
     return;
   }
 
-  if ((*s)->data) {
-    free((*s)->data);
-    (*s)->data = NULL;
+  if (s->data) {
+    free(s->data);
+    s->data = NULL;
   }
 
-  free(*s);
-  *s = NULL;
+  free(s);
 }
 
 /**
@@ -329,19 +328,19 @@ str *strlist_at(strlist *sl, size_t index) {
  *
  * @return void
  */
-void strlist_destroy(strlist **sl) {
-  if (sl == NULL || *sl == NULL) {
+void strlist_destroy(strlist *sl) {
+  if (sl == NULL) {
     return;
   }
 
   // if list is empty, just free list and return
-  if (strlist_empty((*sl))) {
-    free(*sl);
-    *sl = NULL;
+  if (strlist_empty(sl)) {
+    free(sl);
+    sl = NULL;
     return;
   }
 
-  strlistnode *prev = (*sl)->head;
+  strlistnode *prev = sl->head;
   // need a second reference to free the node
   // but not lose the next node
   strlistnode *node = NULL;
@@ -350,8 +349,7 @@ void strlist_destroy(strlist **sl) {
     node = prev->next;
 
     if (prev->value) {
-      // str *s = prev->value;
-      str_destroy(&prev->value);
+      str_free(prev->value);
     }
 
     free(prev);
@@ -359,6 +357,5 @@ void strlist_destroy(strlist **sl) {
     prev = node;
   }
 
-  free(*sl);
-  *sl = NULL;
+  free(sl);
 }

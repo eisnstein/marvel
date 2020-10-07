@@ -66,7 +66,7 @@ static char *generate_hash(uri_maker *urim) {
     sprintf(&hash[i * 2], "%02x", md_value[i]);
   }
 
-  str_destroy(&hash_payload);
+  str_free(hash_payload);
 
   return hash;
 
@@ -125,19 +125,16 @@ error:
   return NULL;
 }
 
-void uri_maker_destroy(uri_maker **self) {
-  if (*self == NULL) {
+void uri_maker_destroy(uri_maker *self) {
+  if (self == NULL) {
     return;
   }
 
-  str_destroy(&(*self)->ts);
-  str_destroy(&(*self)->endpoint);
-  str_destroy(&(*self)->query);
-  str_destroy(&(*self)->pr_api_key);
-  str_destroy(&(*self)->pub_api_key);
+  str_free(self->ts);
+  str_free(self->endpoint);
+  str_free(self->query);
+  str_free(self->pr_api_key);
+  str_free(self->pub_api_key);
 
-  if (*self) {
-    free(*self);
-    *self = NULL;
-  }
+  free(self);
 }

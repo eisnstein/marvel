@@ -9,9 +9,14 @@
 
 #define MARVEL_BASE_URL "MARVEL_BASE_URL"
 #define MARVEL_BASE_ENDPOINT "MARVEL_BASE_ENDPOINT"
-
 #define MARVEL_PUBLIC_KEY "MARVEL_PUBLIC_KEY"
 #define MARVEL_PRIVATE_KEY "MARVEL_PRIVATE_KEY"
+
+#define marvel_free(M) \
+  do {                 \
+    marvel_destroy(M); \
+    M = NULL;          \
+  } while (0);
 
 typedef struct marvel {
   http *client;
@@ -20,6 +25,6 @@ typedef struct marvel {
 
 marvel *marvel_create();
 bool marvel_request(marvel *self, str *query);
-void marvel_destroy(marvel **self);
+void marvel_destroy(marvel *self);
 
 #endif

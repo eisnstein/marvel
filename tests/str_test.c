@@ -14,7 +14,8 @@ char *test_str_macros() {
   mu_assert(str_data(s) != NULL, "String data is NULL");
   mu_assert(str_empty(s) == true, "String is not empty");
 
-  str_destroy(&s);
+  str_free(s);
+  mu_assert(s == NULL, "String should be NULL");
 
   return NULL;
 }
@@ -26,7 +27,8 @@ char *test_strlist_macros() {
               strlist_size(sl));
   mu_assert(strlist_empty(sl) == true, "Stringlist should be empty");
 
-  strlist_destroy(&sl);
+  strlist_free(sl);
+  mu_assert(sl == NULL, "Stringlist should be NULL");
 
   return NULL;
 }
@@ -42,7 +44,7 @@ char *test_str_create() {
               STR_EXPAND, s->expand);
   mu_assert(s->data != NULL, "String data is NULL");
 
-  str_destroy(&s);
+  str_free(s);
 
   return NULL;
 }
@@ -55,7 +57,8 @@ char *test_strlist_create() {
   mu_assert(sl->head == NULL, "Stringlist head pointer should be NULL");
   mu_assert(sl->tail == NULL, "Stringlist head pointer should be NULL");
 
-  strlist_destroy(&sl);
+  strlist_free(sl);
+  mu_assert(sl == NULL, "Stringlist should be NULL");
 
   return NULL;
 }
@@ -84,9 +87,9 @@ char *test_strlist_push() {
               "Value 2 from list should be 'value2', but is %s",
               str_data(value2FromList));
 
-  strlist_destroy(&sl);
-  str_destroy(&value1);
-  str_destroy(&value2);
+  strlist_free(sl);
+  str_free(value1);
+  str_free(value2);
 
   return NULL;
 }
@@ -110,16 +113,16 @@ char *test_strlist_at() {
               "Value 2 from list should be 'value2', but is %s",
               str_data(value2FromList));
 
-  strlist_destroy(&sl);
-  str_destroy(&value1);
-  str_destroy(&value2);
+  strlist_free(sl);
+  str_free(value1);
+  str_free(value2);
 
   return NULL;
 }
 
 char *test_str_destroy() {
   str *s = str_create();
-  str_destroy(&s);
+  str_free(s);
 
   mu_assert(s == NULL, "String should be freed");
 
@@ -128,7 +131,7 @@ char *test_str_destroy() {
 
 char *test_strlist_destroy() {
   strlist *sl = strlist_create();
-  strlist_destroy(&sl);
+  strlist_free(sl);
 
   mu_assert(sl == NULL, "Stringlist should be freed");
 
@@ -142,11 +145,11 @@ char *test_strlist_destroy() {
   mu_assert_v(strlist_size(sl) == 2,
               "Stringlist should have size of 2, but is %zu", strlist_size(sl));
 
-  strlist_destroy(&sl);
+  strlist_free(sl);
   mu_assert(sl == NULL, "Stringlist should be freed");
 
-  str_destroy(&value1);
-  str_destroy(&value2);
+  str_free(value1);
+  str_free(value2);
 
   return NULL;
 }
@@ -166,7 +169,7 @@ char *test_str_from() {
   mu_assert_v(*end == 0, "String should be null terminated but value is '%s'",
               end);
 
-  str_destroy(&s);
+  str_free(s);
 
   str *s2 = str_from(NULL);
   mu_assert(s2 == NULL, "String should be null");
@@ -174,7 +177,7 @@ char *test_str_from() {
   s2 = str_from("");
   mu_assert(s2 != NULL, "String should not be null");
 
-  str_destroy(&s2);
+  str_free(s2);
 
   return NULL;
 }
@@ -193,8 +196,8 @@ char *test_str_duplicate() {
             "Strings should be the same");
   mu_assert(s->data != dup->data, "Strings should not point to the same data");
 
-  str_destroy(&s);
-  str_destroy(&dup);
+  str_free(s);
+  str_free(dup);
 
   return NULL;
 }
@@ -237,13 +240,13 @@ char *test_str_append() {
               "String size should be %d, but is %zu",
               STR_INITIAL_SIZE + STR_EXPAND, s->size);
 
-  str_destroy(&s);
+  str_free(s);
 
   str *s2 = str_create();
   r = str_append(s2, NULL);
   mu_assert(r == false, "Result should be 'false', but is 'true'");
 
-  str_destroy(&s2);
+  str_free(s2);
 
   return NULL;
 }
@@ -261,8 +264,8 @@ char *test_str_split() {
   mu_assert_v(strcmp(str_data(value), "value") == 0,
               "Key should be 'value', but is '%s'", str_data(value));
 
-  str_destroy(&s);
-  strlist_destroy(&sl);
+  str_free(s);
+  strlist_free(sl);
 
   return NULL;
 }
@@ -278,7 +281,7 @@ char *test_str_put_into() {
   mu_assert(res == true, "Should be true, but is false");
   mu_assert(strcmp(str_data(s), "") == 0, "String not same");
 
-  str_destroy(&s);
+  str_free(s);
 
   return NULL;
 }

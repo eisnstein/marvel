@@ -33,13 +33,13 @@ int main(int argc, char *argv[]) {
   res = marvel_request(marvel, query);
   throw_(res == false, "Something went wrong when making request to marvel");
 
-  marvel_destroy(&marvel);
+  marvel_free(marvel);
 
   return EXIT_SUCCESS;
 
 error:
-  if (query) str_destroy(&query);
-  if (marvel) marvel_destroy(&marvel);
+  if (query) str_free(query);
+  if (marvel) marvel_free(marvel);
 
   return EXIT_FAILURE;
 }

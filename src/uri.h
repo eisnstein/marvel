@@ -3,6 +3,12 @@
 
 #include "str.h"
 
+#define uri_maker_free(U) \
+  do {                    \
+    uri_maker_destroy(U); \
+    U = NULL;             \
+  } while (0);
+
 typedef struct uri_maker {
   str *endpoint;
   str *query;
@@ -12,7 +18,7 @@ typedef struct uri_maker {
 } uri_maker;
 
 extern uri_maker *uri_maker_create();
-extern void uri_maker_destroy(uri_maker **self);
+extern void uri_maker_destroy(uri_maker *self);
 char *uri_maker_build_req(uri_maker *urim);
 
 #endif

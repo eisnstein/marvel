@@ -52,16 +52,16 @@ bool env_init(const char *filename) {
     ret = setenv(str_data(env_key), str_data(env_value), 1);
     throw_(ret == -1, "Could not set env variable.");
 
-    strlist_destroy(&list);
+    strlist_free(list);
   }
 
-  str_destroy(&envval);
+  str_free(envval);
   free(line);
   fclose(f);
   return true;
 
 error:
-  if (envval) str_destroy(&envval);
+  if (envval) str_free(envval);
   if (line) free(line);
   if (f) fclose(f);
   return false;

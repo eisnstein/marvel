@@ -144,29 +144,26 @@ str *http_receive(http *client) {
   return response_raw;
 
 error:
-  if (response_raw) str_destroy(&response_raw);
+  if (response_raw) str_free(response_raw);
   return NULL;
 }
 
-extern void http_destroy(http **self) {
-  if (*self == NULL) {
+extern void http_destroy(http *self) {
+  if (self == NULL) {
     return;
   }
 
-  close((*self)->sockfd);
+  close(self->sockfd);
 
-  if ((*self)->url) {
-    str_destroy(&(*self)->url);
-    (*self)->url = NULL;
+  if (self->url) {
+    str_free(self->url);
   }
 
-  if ((*self)->port) {
-    str_destroy(&(*self)->port);
-    (*self)->port = NULL;
+  if (self->port) {
+    str_free(self->port);
   }
 
-  free(*self);
-  *self = NULL;
+  free(self);
 }
 
 /**
@@ -221,7 +218,7 @@ bool http_response_parse(http_response *response, str *response_raw) {
 
     memset(line, '\0', 200);
     mtnl(data);
-    str_destroy(&tmp);
+    str_free(tmp);
   }
 
   response->headers = headers;
@@ -230,35 +227,31 @@ bool http_response_parse(http_response *response, str *response_raw) {
 
   response->body = str_from(data);
 
-  str_destroy(&tmp);
+  str_free(tmp);
 
   return true;
 
 error:
-  if (tmp) str_destroy(&tmp);
+  if (tmp) str_free(tmp);
   return false;
 }
 
-void http_response_destroy(http_response **r) {
-  if (*r == NULL) {
+void http_response_destroy(http_response *r) {
+  if (r == NULL) {
     return;
   }
 
-  if ((*r)->raw) {
-    str_destroy(&(*r)->raw);
-    (*r)->raw = NULL;
+  if (r->raw) {
+    str_free(r->raw);
   }
 
-  if ((*r)->headers) {
-    strlist_destroy(&(*r)->headers);
-    (*r)->headers = NULL;
+  if (r->headers) {
+    strlist_free(r->headers);
   }
 
-  if ((*r)->body) {
-    str_destroy(&(*r)->body);
-    (*r)->body = NULL;
+  if (r->body) {
+    str_free(r->body);
   }
 
-  free(*r);
-  *r = NULL;
+  free(r);
 }

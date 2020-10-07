@@ -21,8 +21,8 @@ marvel *marvel_create() {
   return m;
 
 error:
+  if (m && m->client) http_free(m->client);
   if (m) free(m);
-  if (m->client) http_destroy(&m->client);
   return NULL;
 }
 
@@ -42,7 +42,7 @@ bool marvel_request(marvel *self, str *query) {
 
   // send the request to marvel
   r = http_send(self->client, self->uri_maker);
-  throw_(r == -1, "Could not send request to marvel");
+  throw_(r == false, "Could not send request to marvel");
 
   // receive response from marvel
   str *response_raw = http_receive(self->client);
@@ -54,7 +54,7 @@ bool marvel_request(marvel *self, str *query) {
   throw_(http_response == NULL, "Could not create http response object");
 
   r = http_response_parse(http_response, response_raw);
-  throw_(r == -1, "Could not parse http response");
+  throw_(r == false, "Could not parse http response");
 
   // write response into file
   FILE *output = fopen("output.json", "w+");
@@ -63,23 +63,22 @@ bool marvel_request(marvel *self, str *query) {
   fputs(str_data(http_response->body), output);
   fclose(output);
 
-  http_response_destroy(&http_response);
+  http_response_free(http_response);
 
   return true;
 
 error:
-  if (http_response) http_response_destroy(&http_response);
+  if (http_response) http_response_free(http_response);
   return false;
 }
 
-void marvel_destroy(marvel **self) {
-  if (*self == NULL) {
+void marvel_destroy(marvel *self) {
+  if (self == NULL) {
     return;
   }
 
-  uri_maker_destroy(&(*self)->uri_maker);
-  http_destroy(&(*self)->client);
+  uri_maker_free(self->uri_maker);
+  http_free(self->client);
 
-  free(*self);
-  *self = NULL;
+  free(self);
 }

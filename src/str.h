@@ -27,10 +27,20 @@
       (str_data(S)[len - 1]) = '\0';                   \
     }                                                  \
   } while (0)
+#define str_free(S) \
+  do {              \
+    str_destroy(S); \
+    S = NULL;       \
+  } while (0)
 
 // String List Macros
 #define strlist_size(SL) ((SL)->size)
 #define strlist_empty(SL) ((SL)->size == 0)
+#define strlist_free(SL) \
+  do {                   \
+    strlist_destroy(SL); \
+    SL = NULL;           \
+  } while (0)
 
 typedef struct str {
   size_t size;
@@ -57,12 +67,12 @@ str *str_duplicate(const str *s);
 bool str_append(str *s, const char *append);
 strlist *str_split(str *s, const char *delimiter);
 bool str_put_into(str *s, const char *put);
-void str_destroy(str **s);
+void str_destroy(str *s);
 
 strlist *strlist_create();
 bool strlist_push(strlist *sl, str *value);
 str *strlist_pop(strlist *sl);
 str *strlist_at(strlist *sl, size_t index);
-void strlist_destroy(strlist **sl);
+void strlist_destroy(strlist *sl);
 
 #endif
