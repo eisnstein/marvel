@@ -62,6 +62,7 @@ typedef struct strlist {
 } strlist;
 
 str *str_create();
+str *str_create_v(int initialSize, int expandSize);
 str *str_from(const char *s);
 str *str_duplicate(const str *s);
 bool str_append(str *s, const char *append);

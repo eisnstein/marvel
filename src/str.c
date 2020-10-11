@@ -47,6 +47,24 @@ error:
   return NULL;
 }
 
+str *str_create_v(int initialSize, int expandSize) {
+  str *s = malloc(sizeof(str));
+  throw_mem_(s);
+
+  s->size = initialSize;
+  s->expand = expandSize;
+  s->len = 0;
+
+  s->data = calloc(s->size, sizeof(char));
+  throw_mem_(s->data);
+
+  return s;
+
+error:
+  if (s) free(s);
+  return NULL;
+}
+
 /**
  * Create a string object from a raw C char array.
  * The char array will be copied into the string object.

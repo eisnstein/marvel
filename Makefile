@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -g -Wall -Wextra -pedantic -Isrc -std=c11# -DNDEBUG
+CFLAGS = -g -Wall -Wextra -pedantic -Isrc -std=c11 #-DNDEBUG
 LDLIBS = -lssl -lcrypto
 
 BUILD_DIR ?= ./build

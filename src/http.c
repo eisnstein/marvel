@@ -80,9 +80,8 @@ static bool http_get_socket_and_connect(http *client) {
     break;
   }
 
-  inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr), ipstr,
-            sizeof(ipstr));
-  debug_v_("client: connecting to %s", ipstr);
+  /*   inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr),
+    ipstr, sizeof(ipstr)); debug_v_("client: connecting to %s", ipstr); */
 
   freeaddrinfo(client->res);
 
@@ -129,14 +128,16 @@ error:
 }
 
 str *http_receive(http *client) {
-  char buf[MAXDATASIZE];
-  str *response_raw = str_create();
+  char buf[MAXDATASIZE + 1] = {0};
+  str *response_raw = str_create_v(MAXDATASIZE * 5, MAXDATASIZE);
   throw_(response_raw == NULL, "Could not create string.");
 
   ssize_t bytes_received = 0;
   do {
     bytes_received = recv(client->sockfd, buf, MAXDATASIZE, 0);
     throw_(bytes_received == -1, "Could not receive data.");
+
+    debug_v_("Bytes received: %zu\n", bytes_received);
 
     str_append(response_raw, buf);
   } while (bytes_received > 0);
