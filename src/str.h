@@ -20,6 +20,7 @@
 #define str_length(S) ((S)->len)
 #define str_empty(S) ((S)->len == 0)
 #define str_data(S) ((S)->data)
+#define str_size(S) ((S)->size)
 #define str_strip_nl(S)                                \
   do {                                                 \
     size_t len = str_length(S);                        \
@@ -62,12 +63,13 @@ typedef struct strlist {
 } strlist;
 
 str *str_create();
-str *str_create_v(int initialSize, int expandSize);
+str *str_create_v(size_t initialSize, size_t expandSize);
 str *str_from(const char *s);
 str *str_duplicate(const str *s);
 bool str_append(str *s, const char *append);
 strlist *str_split(str *s, const char *delimiter);
 bool str_put_into(str *s, const char *put);
+str *str_substr(str *s, size_t pos, size_t length);
 void str_destroy(str *s);
 
 strlist *strlist_create();

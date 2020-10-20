@@ -4,6 +4,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
+#include <regex.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -16,7 +17,7 @@
 static bool http_get_address_info(http *client);
 static inline void *get_in_addr(struct sockaddr *sa);
 
-http *http_create() {
+http *http_client() {
   http *h = malloc(sizeof(http));
   throw_mem_(h);
 
@@ -149,22 +150,98 @@ error:
   return NULL;
 }
 
-extern void http_destroy(http *self) {
-  if (self == NULL) {
+http_response *http_get(http *client, str *url) {
+  http_request *request = http_request_create(url);
+  return NULL;
+}
+
+extern void http_client_destroy(http *h) {
+  if (h == NULL) {
     return;
   }
 
-  close(self->sockfd);
+  close(h->sockfd);
+  str_free(h->url);
+  str_free(h->port);
 
-  if (self->url) {
-    str_free(self->url);
+  free(h);
+}
+
+uri *parse_url(str *url) {
+  const char *pattern = "^(https?):\/\/([a-zA-Z0-9.]+)(\/?[^\?]*)?\?\?(.+)?";
+  regex_t preg;
+  const size_t possibleMatchCount = 5;
+  regmatch_t pm[possibleMatchCount];
+  const size_t bufferSize = 256;
+  char errorBuffer[bufferSize];
+  char buf[bufferSize];
+
+  uri *u = malloc(sizeof(uri));
+  throw_mem_(u);
+
+  int res = regcomp(&preg, pattern, REG_ICASE | REG_EXTENDED);
+  if (res != 0) {
+    regerror(res, &preg, errorBuffer, bufferSize);
+    throw_v_(true, "Could not compile regex: %s", errorBuffer);
   }
 
-  if (self->port) {
-    str_free(self->port);
+  res = regexec(&preg, str_data(url), possibleMatchCount, pm, 0);
+  if (res != 0) {
+    regerror(res, &preg, errorBuffer, bufferSize);
+    throw_v_(true, "Could not exec regex: %s\n", errorBuffer);
   }
 
-  free(self);
+  regoff_t len = 0;
+  str *tmp = NULL;
+  for (size_t i = 1; i < possibleMatchCount; i++) {
+    if (pm[i].rm_so == -1) {
+      break;
+    }
+
+    len = pm[i].rm_eo - pm[i].rm_so;
+    tmp = str_substr(url, pm[i].rm_so, len);
+    debug_v_("Value: %s\n", str_data(tmp));
+  }
+
+  regfree(&preg);
+  str_free(tmp);
+
+error:
+  return NULL;
+}
+
+/**
+ * HTTP Request
+ */
+http_request *http_request_create(str *url) {
+  http_request *r = malloc(sizeof(http_request));
+  throw_mem_(r);
+
+  r->mode = GET;
+  r->base_endpoint = NULL;
+  r->path = NULL;
+  r->query = NULL;
+  r->headers = NULL;
+  r->body = NULL;
+
+  return r;
+
+error:
+  return NULL;
+}
+
+void http_request_destroy(http_request *r) {
+  if (r == NULL) {
+    return;
+  }
+
+  str_free(r->base_endpoint);
+  str_free(r->path);
+  str_free(r->query);
+  strlist_free(r->headers);
+  str_free(r->body);
+
+  free(r);
 }
 
 /**
@@ -242,17 +319,9 @@ void http_response_destroy(http_response *r) {
     return;
   }
 
-  if (r->raw) {
-    str_free(r->raw);
-  }
-
-  if (r->headers) {
-    strlist_free(r->headers);
-  }
-
-  if (r->body) {
-    str_free(r->body);
-  }
+  str_free(r->raw);
+  strlist_free(r->headers);
+  str_free(r->body);
 
   free(r);
 }

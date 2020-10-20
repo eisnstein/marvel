@@ -13,6 +13,8 @@ char *test_str_macros() {
               str_length(s));
   mu_assert(str_data(s) != NULL, "String data is NULL");
   mu_assert(str_empty(s) == true, "String is not empty");
+  mu_assert_v(str_size(s) == STR_INITIAL_SIZE,
+              "String size should be 32, but is %zu", str_size(s));
 
   str_free(s);
   mu_assert(s == NULL, "String should be NULL");
@@ -45,6 +47,25 @@ char *test_str_create() {
   mu_assert(s->data != NULL, "String data is NULL");
 
   str_free(s);
+
+  return NULL;
+}
+
+char *test_str_create_v() {
+  str *s = str_create_v(32, 32);
+
+  mu_assert_v(s->len == 0, "String len should be 0, but is %zu", s->len);
+  mu_assert_v(s->size == 32, "String initial size should be 32, but is %zu",
+              s->size);
+  mu_assert_v(s->expand == 32, "String expand should be 32, but is %zu",
+              s->expand);
+  mu_assert(s->data != NULL, "String data is NULL");
+
+  str_free(s);
+
+  s = str_create_v(32, 0);
+
+  mu_assert(s == NULL, "String should not be initialized with expand size 0");
 
   return NULL;
 }
@@ -137,7 +158,9 @@ char *test_strlist_destroy() {
 
   sl = strlist_create();
   str *value1 = str_from("value1");
+  mu_assert(value1 != NULL, "String should not be NULL");
   str *value2 = str_from("value2");
+  mu_assert(value2 != NULL, "String should not be NULL");
 
   strlist_push(sl, value1);
   strlist_push(sl, value2);
@@ -176,6 +199,13 @@ char *test_str_from() {
 
   s2 = str_from("");
   mu_assert(s2 != NULL, "String should not be null");
+
+  str_free(s2);
+
+  const char *tmp = "I";
+  s2 = str_from(tmp);
+  mu_assert(s2 != NULL, "String should not be null");
+  mu_assert(strcmp(str_data(s2), tmp) == 0, "Strings should be the same");
 
   str_free(s2);
 
@@ -286,12 +316,57 @@ char *test_str_put_into() {
   return NULL;
 }
 
+char *test_str_substr() {
+  str *s = str_from("I am a test string.");
+
+  str *substr = str_substr(s, 2, 2);
+  mu_assert(substr != NULL, "String should not be NULL");
+  mu_assert_v(strcmp(str_data(substr), "am") == 0,
+              "Substring should be 'am', but is '%s'", str_data(substr));
+
+  str_free(substr);
+
+  substr = str_substr(s, 0, 600);
+  mu_assert(substr != NULL, "String should not be NULL");
+  mu_assert_v(strcmp(str_data(substr), "I am a test string.") == 0,
+              "Substring should be 'I am a test string.', but is '%s'",
+              str_data(substr));
+
+  str_free(substr);
+
+  substr = str_substr(s, 70, 600);
+  mu_assert(substr == NULL, "String should be NULL");
+
+  str_free(substr);
+
+  substr = str_substr(s, 18, 1);
+  mu_assert(substr != NULL, "String should not be NULL");
+  mu_assert_v(strcmp(str_data(substr), ".") == 0,
+              "Substring should be '.', but is '%s'", str_data(substr));
+
+  str_free(substr);
+
+  substr = str_substr(s, 2, 600);
+  mu_assert(substr != NULL, "String should not be NULL");
+  mu_assert_v(str_size(substr) == STR_INITIAL_SIZE,
+              "String size should be 32, but is %zu", str_size(substr));
+  mu_assert_v(strcmp(str_data(substr), "am a test string.") == 0,
+              "Substring should be 'am a test string.', but is '%s'",
+              str_data(substr));
+
+  str_free(substr);
+  str_free(s);
+
+  return NULL;
+}
+
 char *all_tests() {
   mu_suite_start();
 
   mu_run_test(test_str_macros);
   mu_run_test(test_strlist_macros);
   mu_run_test(test_str_create);
+  mu_run_test(test_str_create_v);
   mu_run_test(test_strlist_create);
   mu_run_test(test_str_destroy);
   mu_run_test(test_strlist_destroy);
@@ -301,6 +376,7 @@ char *all_tests() {
   mu_run_test(test_str_append);
   mu_run_test(test_str_split);
   mu_run_test(test_str_put_into);
+  mu_run_test(test_str_substr);
 
   mu_run_test(test_strlist_push);
   mu_run_test(test_strlist_at);

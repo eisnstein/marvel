@@ -12,7 +12,7 @@ marvel *marvel_create() {
   marvel *m = malloc(sizeof(marvel));
   throw_mem_(m);
 
-  m->client = http_create();
+  m->client = http_client();
   throw_(m->client == NULL, "Could not create http client");
 
   m->uri_maker = uri_maker_create();
@@ -21,7 +21,7 @@ marvel *marvel_create() {
   return m;
 
 error:
-  if (m && m->client) http_free(m->client);
+  if (m && m->client) http_client_free(m->client);
   if (m) free(m);
   return NULL;
 }
@@ -30,8 +30,22 @@ bool marvel_request(marvel *self, str *query) {
   bool r = false;
   http_response *http_response = NULL;
 
-  str *url = str_from(getenv(MARVEL_BASE_URL));
-  throw_(url == NULL, "Could not get base url from env");
+  str *endpoint = str_from(getenv(MARVEL_BASE_ENDPOINT));
+  throw_(endpoint == NULL, "Could not get base url from env");
+
+  str *path = str_from(getenv(MARVEL_PATH));
+  throw_(path == NULL, "Could not get base url from env");
+
+  http_request *request = http_request_create();
+  throw_(request == NULL, "Could not create request object");
+
+  request->base_endpoint = endpoint;
+  request->path = path;
+  request->query = query;
+
+  // http_response *response = http_get(self->client, request);
+  str *url = str_from("http://gateway.marvel.com/api/v2?ts=123&hash=abcd");
+  uri *u = parse_url(url);
 
   // connect to marvel api
   r = http_connect(self->client, url, NULL);
@@ -68,7 +82,7 @@ bool marvel_request(marvel *self, str *query) {
   return true;
 
 error:
-  if (http_response) http_response_free(http_response);
+  http_response_free(http_response);
   return false;
 }
 
@@ -78,7 +92,7 @@ void marvel_destroy(marvel *self) {
   }
 
   uri_maker_free(self->uri_maker);
-  http_free(self->client);
+  http_client_free(self->client);
 
   free(self);
 }

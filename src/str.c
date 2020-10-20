@@ -25,7 +25,8 @@
  */
 
 /**
- * Creates / initialises an empty string object.
+ * Creates / initialises an empty string object if a
+ * predefined initial size and a predefined expand size.
  *
  * @return str | NULL   pointer to a string object
  */
@@ -47,8 +48,18 @@ error:
   return NULL;
 }
 
-str *str_create_v(int initialSize, int expandSize) {
-  str *s = malloc(sizeof(str));
+/**
+ * Creates / initialises an empty string object if a
+ * variable initial and expand size.
+ *
+ * @return str | NULL   pointer to a string object
+ */
+str *str_create_v(size_t initialSize, size_t expandSize) {
+  str *s = NULL;
+
+  throw_(expandSize < 2, "Expand size cannot be lower than 2");
+
+  s = malloc(sizeof(str));
   throw_mem_(s);
 
   s->size = initialSize;
@@ -206,6 +217,31 @@ bool str_put_into(str *s, const char *put) {
   // to the beginning
   s->len = 0;
   return str_append(s, put);
+}
+
+str *str_substr(str *s, size_t pos, size_t length) {
+  size_t len = str_length(s);
+  if (pos >= len) return NULL;
+  if (length >= len) length = len - pos;
+  if (length == 0) return NULL;
+
+  const char *from = str_data(s);
+  from += pos;
+
+  char *tmp = malloc((sizeof(char) * length) + 1);
+  throw_mem_(tmp);
+
+  strncpy(tmp, from, length);
+  tmp[length] = '\0';
+
+  str *substr = str_from(tmp);
+
+  free(tmp);
+
+  return substr;
+
+error:
+  return NULL;
 }
 
 /**
