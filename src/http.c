@@ -150,8 +150,36 @@ error:
   return NULL;
 }
 
-http_response *http_get(http *client, str *url) {
+http_response *http_get(str *url) {
+  http_response *http_response = NULL;
+  bool r = false;
   http_request *request = http_request_create(url);
+  throw_(request == NULL, "Could not create request object");
+
+  uri *u = parse_url(url);
+
+  // connect to marvel api
+  r = http_connect(client, url, NULL);
+  throw_v_(r == false, "Could not connect to %s", str_data(url));
+
+  // send the request to marvel
+  r = http_send(client, uri_maker);
+  throw_(r == false, "Could not send request to marvel");
+
+  // receive response from marvel
+  str *response_raw = http_receive(client);
+  throw_(response_raw == NULL, "Could not receive data");
+
+  debug_v_("size of response: %ld", str_length(response_raw));
+
+  http_response = http_response_create();
+  throw_(http_response == NULL, "Could not create http response object");
+
+  r = http_response_parse(http_response, response_raw);
+  throw_(r == false, "Could not parse http response");
+  return NULL;
+
+error:
   return NULL;
 }
 

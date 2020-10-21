@@ -12,19 +12,6 @@
 #define MARVEL_PUBLIC_KEY "MARVEL_PUBLIC_KEY"
 #define MARVEL_PRIVATE_KEY "MARVEL_PRIVATE_KEY"
 
-#define marvel_free(M) \
-  do {                 \
-    marvel_destroy(M); \
-    M = NULL;          \
-  } while (0);
-
-typedef struct marvel {
-  http *client;
-  uri_maker *uri_maker;
-} marvel;
-
-marvel *marvel_create();
-bool marvel_request(marvel *self, str *query);
-void marvel_destroy(marvel *self);
+str *marvel_build_url(str *query);
 
 #endif

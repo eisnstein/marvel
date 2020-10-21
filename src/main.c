@@ -13,8 +13,6 @@
 #define VERSION "0.0.2"
 
 int main(int argc, char *argv[]) {
-  marvel *marvel = NULL;
-
   // check if useage
   die_(argc < 2, "Usage: marvel <query>");
 
@@ -26,20 +24,19 @@ int main(int argc, char *argv[]) {
   bool res = env_init(NULL);
   throw_(res == false, "Could not initialize env variables");
 
-  // initialise marvel client
-  marvel = marvel_create();
-  throw_(marvel == NULL, "Could not create marvel client");
+  // build full marvel url
+  str *full_url = marvel_build_url(query);
+  throw_(full_url == NULL, "Could not build full marvel url");
 
-  res = marvel_request(marvel, query);
-  throw_(res == false, "Something went wrong when making request to marvel");
+  // make get request
 
-  marvel_free(marvel);
+  // show response
+
+  str_free(query);
 
   return EXIT_SUCCESS;
 
 error:
-  if (query) str_free(query);
-  if (marvel) marvel_free(marvel);
-
+  str_free(query);
   return EXIT_FAILURE;
 }
