@@ -9,10 +9,9 @@ char *test_read_env_vars() {
   int ret = env_init(".env.test");
 
   mu_assert(ret == true, "Something went wrong parsing the .env.test file");
-  mu_assert(strcmp(getenv("MARVEL_BASE_URL"), "http://gateway.marvel.com") == 0,
+  mu_assert(strcmp(getenv("MARVEL_ENDPOINT"),
+                   "http://gateway.marvel.com/v1/public") == 0,
             "Url does not match");
-  mu_assert(strcmp(getenv("MARVEL_BASE_ENDPOINT"), "/v1/public") == 0,
-            "Endpoint does not match");
   mu_assert(strcmp(getenv("MARVEL_PUBLIC_KEY"), "public_key") == 0,
             "Public key does not match");
   mu_assert(strcmp(getenv("MARVEL_PRIVATE_KEY"), "private_key") == 0,

@@ -61,7 +61,7 @@ bool env_init(const char *filename) {
   return true;
 
 error:
-  if (envval) str_free(envval);
+  str_free(envval);
   if (line) free(line);
   if (f) fclose(f);
   return false;

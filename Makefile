@@ -34,6 +34,9 @@ $(TEST_DIR)/str_test: $(TEST_DIR)/str_test.c $(SRC_DIR)/str.c
 $(TEST_DIR)/env_test: $(TEST_DIR)/env_test.c $(SRC_DIR)/env.c
 	$(CC) $< -o $@ $(CFLAGS) build/env.o build/str.o
 
+$(TEST_DIR)/marvel_test: $(TEST_DIR)/marvel_test.c
+	$(CC) $< -o $@ $(CFLAGS) build/marvel.o build/env.o build/str.o $(LDLIBS)
+
 .PHONY: clean
 clean:
 	rm -f $(OBJECTS) $(OBJECTS_TESTS) $(TESTS) 
