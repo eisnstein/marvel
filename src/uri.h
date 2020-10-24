@@ -3,22 +3,25 @@
 
 #include "str.h"
 
-#define uri_maker_free(U) \
-  do {                    \
-    uri_maker_destroy(U); \
-    U = NULL;             \
+#define DEFAULT_PORT "80"
+
+#define uri_free(U) \
+  do {              \
+    uri_destroy(U); \
+    U = NULL;       \
   } while (0);
 
-typedef struct uri_maker {
-  str *endpoint;
+typedef struct uri {
+  str *scheme;
+  str *host;
+  str *port;
+  str *path;
   str *query;
-  str *ts;
-  str *pr_api_key;
-  str *pub_api_key;
-} uri_maker;
+  str *hash;
+} uri;
 
-extern uri_maker *uri_maker_create();
-extern void uri_maker_destroy(uri_maker *self);
-char *uri_maker_build_req(uri_maker *urim);
+extern uri *uri_create();
+extern bool uri_parse(uri *u, str *url);
+extern void uri_destroy(uri *u);
 
 #endif

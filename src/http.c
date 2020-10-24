@@ -4,7 +4,6 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/in.h>
-#include <regex.h>
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -14,18 +13,17 @@
 
 #include "util.h"
 
-static bool http_get_address_info(http *client);
+static bool get_address_info(http_client *client);
 static inline void *get_in_addr(struct sockaddr *sa);
 
-http *http_client() {
-  http *h = malloc(sizeof(http));
+http_client *http_client_create() {
+  http_client *h = malloc(sizeof(http_client));
   throw_mem_(h);
 
   h->sockfd = 0;
   h->connection = 0;
   h->res = NULL;
-  h->url = NULL;
-  h->port = NULL;
+  h->req = NULL;
 
   return h;
 
@@ -33,16 +31,17 @@ error:
   return NULL;
 }
 
-static bool http_get_address_info(http *client) {
+static bool get_address_info(http_client *client) {
   int status = 0;
   struct addrinfo hints;
 
   memset(&hints, 0, sizeof(hints));
+  hints.ai_flags = AI_PASSIVE;
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
 
-  status = getaddrinfo(str_data(client->url), str_data(client->port), &hints,
-                       &client->res);
+  status = getaddrinfo(str_data(client->req->uri->host),
+                       str_data(client->req->uri->port), &hints, &client->res);
   throw_(status != 0, "Could not get address info");
   throw_(client->res == NULL, "Could not get address info");
 
@@ -60,7 +59,7 @@ static inline void *get_in_addr(struct sockaddr *sa) {
   return &(((struct sockaddr_in6 *)sa)->sin6_addr);
 }
 
-static bool http_get_socket_and_connect(http *client) {
+static bool get_socket_and_connect(http_client *client) {
   struct addrinfo *p;
   char ipstr[INET6_ADDRSTRLEN];
 
@@ -89,17 +88,13 @@ static bool http_get_socket_and_connect(http *client) {
   return true;
 }
 
-bool http_connect(http *client, str *url, str *port) {
+static bool http_connect(http_client *client) {
   throw_(client == NULL, "No http client provided");
-  throw_(url == NULL, "No URL provided");
 
-  client->url = url;
-  client->port = port ? port : str_from(DEFAULT_PORT);
-
-  bool res = http_get_address_info(client);
+  bool res = get_address_info(client);
   throw_(res == false, "Could not get address info");
 
-  res = http_get_socket_and_connect(client);
+  res = get_socket_and_connect(client);
   throw_(res == false, "Could not get socket or connect");
 
   return true;
@@ -108,11 +103,11 @@ error:
   return false;
 }
 
-bool http_send(http *client, uri_maker *urim) {
+static bool http_send(http_client *client, uri *urim) {
   ssize_t bytes_sent = 0;
 
   // build the request
-  char *req = uri_maker_build_req(urim);
+  char *req = "request";
 
   debug_v_("req:\n%s", req);
 
@@ -128,7 +123,7 @@ error:
   return false;
 }
 
-str *http_receive(http *client) {
+static str *http_receive(http_client *client) {
   char buf[MAXDATASIZE + 1] = {0};
   str *response_raw = str_create_v(MAXDATASIZE * 5, MAXDATASIZE);
   throw_(response_raw == NULL, "Could not create string.");
@@ -150,17 +145,18 @@ error:
   return NULL;
 }
 
-http_response *http_get(str *url) {
+http_response *http_get(http_client *client, str *url) {
   http_response *http_response = NULL;
   bool r = false;
+
   http_request *request = http_request_create(url);
   throw_(request == NULL, "Could not create request object");
 
-  uri *u = parse_url(url);
+  client->req = request;
 
   // connect to marvel api
-  // r = http_connect(client, url, NULL);
-  // throw_v_(r == false, "Could not connect to %s", str_data(url));
+  r = http_connect(client);
+  throw_v_(r == false, "Could not connect to %s", str_data(url));
 
   // send the request to marvel
   // r = http_send(client, uri_maker);
@@ -183,59 +179,15 @@ error:
   return NULL;
 }
 
-extern void http_client_destroy(http *h) {
-  if (h == NULL) {
+extern void http_client_destroy(http_client *client) {
+  if (client == NULL) {
     return;
   }
 
-  close(h->sockfd);
-  str_free(h->url);
-  str_free(h->port);
+  close(client->sockfd);
+  http_request_free(client->req);
 
-  free(h);
-}
-
-uri *parse_url(str *url) {
-  const char *pattern = "^(https?):\/\/([a-zA-Z0-9.]+)(\/?[^\?]*)?\?\?(.+)?";
-  regex_t preg;
-  const size_t possibleMatchCount = 5;
-  regmatch_t pm[possibleMatchCount];
-  const size_t bufferSize = 256;
-  char errorBuffer[bufferSize];
-  char buf[bufferSize];
-
-  uri *u = malloc(sizeof(uri));
-  throw_mem_(u);
-
-  int res = regcomp(&preg, pattern, REG_ICASE | REG_EXTENDED);
-  if (res != 0) {
-    regerror(res, &preg, errorBuffer, bufferSize);
-    throw_v_(true, "Could not compile regex: %s", errorBuffer);
-  }
-
-  res = regexec(&preg, str_data(url), possibleMatchCount, pm, 0);
-  if (res != 0) {
-    regerror(res, &preg, errorBuffer, bufferSize);
-    throw_v_(true, "Could not exec regex: %s\n", errorBuffer);
-  }
-
-  regoff_t len = 0;
-  str *tmp = NULL;
-  for (size_t i = 1; i < possibleMatchCount; i++) {
-    if (pm[i].rm_so == -1) {
-      break;
-    }
-
-    len = pm[i].rm_eo - pm[i].rm_so;
-    tmp = str_substr(url, pm[i].rm_so, len);
-    debug_v_("Value: %s\n", str_data(tmp));
-  }
-
-  regfree(&preg);
-  str_free(tmp);
-
-error:
-  return NULL;
+  free(client);
 }
 
 /**
@@ -246,9 +198,6 @@ http_request *http_request_create(str *url) {
   throw_mem_(r);
 
   r->mode = GET;
-  r->base_endpoint = NULL;
-  r->path = NULL;
-  r->query = NULL;
   r->headers = NULL;
   r->body = NULL;
 
@@ -258,18 +207,15 @@ error:
   return NULL;
 }
 
-void http_request_destroy(http_request *r) {
-  if (r == NULL) {
+void http_request_destroy(http_request *req) {
+  if (req == NULL) {
     return;
   }
 
-  str_free(r->base_endpoint);
-  str_free(r->path);
-  str_free(r->query);
-  strlist_free(r->headers);
-  str_free(r->body);
+  strlist_free(req->headers);
+  str_free(req->body);
 
-  free(r);
+  free(req);
 }
 
 /**

@@ -28,18 +28,24 @@ int main(int argc, char *argv[]) {
   str *full_url = marvel_build_url(query);
   throw_(full_url == NULL, "Could not build full marvel url");
 
+  // initalise http client
+  http_client *client = http_client_create();
+  throw_(client == NULL, "Could not create http client");
+
   // make get request
-  http_response *response = http_get(full_url);
+  http_response *response = http_get(client, full_url);
 
   // show response
 
   str_free(query);
   str_free(full_url);
+  http_client_free(client);
 
   return EXIT_SUCCESS;
 
 error:
   str_free(query);
   str_free(full_url);
+  http_client_free(client);
   return EXIT_FAILURE;
 }

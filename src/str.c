@@ -235,12 +235,14 @@ str *str_substr(str *s, size_t pos, size_t length) {
   tmp[length] = '\0';
 
   str *substr = str_from(tmp);
+  throw_v_(substr == NULL, "Could not create substr from '%s'", tmp);
 
   free(tmp);
 
   return substr;
 
 error:
+  if (tmp) free(tmp);
   return NULL;
 }
 
