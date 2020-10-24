@@ -63,7 +63,7 @@ typedef struct uri {
 } uri;
 
 extern http *http_client();
-extern http_response *http_get(http *client, str *url);
+extern http_response *http_get(str *url);
 extern bool http_connect(http *client, str *url, str *port);
 extern bool http_send(http *client, uri_maker *uri);
 extern str *http_receive(http *client);

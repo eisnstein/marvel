@@ -360,24 +360,75 @@ char *test_str_substr() {
   return NULL;
 }
 
+char *test_str_starts_with() {
+  str *s = str_from("abcdefg");
+
+  mu_assert(str_starts_with(s, "abcd") == true,
+            "String should start with search value");
+  mu_assert(str_starts_with(s, "abcdefg") == true,
+            "String should start with search value");
+  mu_assert(str_starts_with(s, "bcda") == false,
+            "String should not start with search value");
+  mu_assert(str_starts_with(s, "abcdefgh") == false,
+            "String should not start with longer search value");
+  mu_assert(str_starts_with(s, "") == false,
+            "String should not start with empty search value");
+  mu_assert(str_starts_with(s, NULL) == false,
+            "String should not start with NULL search value");
+  mu_assert(str_starts_with(NULL, "abcd") == false,
+            "String should not start with NULL search value");
+
+  str_free(s);
+
+  s = str_from("");
+
+  mu_assert(str_starts_with(s, "abcd") == false,
+            "Empty string should not start with search value");
+
+  str_free(s);
+
+  s = str_from("The quick brown Fox jumps over the lazy Dog.");
+
+  mu_assert(str_starts_with(s, "The ") == true,
+            "String should start with search value");
+  mu_assert(str_starts_with(s, "The quick brown Fox") == true,
+            "String should start with search value");
+  mu_assert(str_starts_with(
+                s, "The quick brown Fox jumps over the lazy Dog.") == true,
+            "String should start with search value");
+  mu_assert(str_starts_with(
+                s, "the quick brown Fox jumps over the lazy Dog.") == false,
+            "String should start with search value");
+  mu_assert(str_starts_with(
+                s, "The quick brown Fox jumps over the lazy dog.") == false,
+            "String should start with search value");
+  mu_assert(str_starts_with(
+                s, "The quick brown Fox jumps over the lazy Dog.    ") == false,
+            "String should start with search value");
+
+  str_free(s);
+
+  return NULL;
+}
+
 char *all_tests() {
   mu_suite_start();
 
   mu_run_test(test_str_macros);
-  mu_run_test(test_strlist_macros);
   mu_run_test(test_str_create);
   mu_run_test(test_str_create_v);
-  mu_run_test(test_strlist_create);
   mu_run_test(test_str_destroy);
-  mu_run_test(test_strlist_destroy);
-
   mu_run_test(test_str_from);
   mu_run_test(test_str_duplicate);
   mu_run_test(test_str_append);
   mu_run_test(test_str_split);
   mu_run_test(test_str_put_into);
   mu_run_test(test_str_substr);
+  mu_run_test(test_str_starts_with);
 
+  mu_run_test(test_strlist_macros);
+  mu_run_test(test_strlist_create);
+  mu_run_test(test_strlist_destroy);
   mu_run_test(test_strlist_push);
   mu_run_test(test_strlist_at);
 

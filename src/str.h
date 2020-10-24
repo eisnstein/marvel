@@ -70,6 +70,7 @@ bool str_append(str *s, const char *append);
 strlist *str_split(str *s, const char *delimiter);
 bool str_put_into(str *s, const char *put);
 str *str_substr(str *s, size_t pos, size_t length);
+bool str_starts_with(str *s, const char *search);
 void str_destroy(str *s);
 
 strlist *strlist_create();

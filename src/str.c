@@ -244,6 +244,34 @@ error:
   return NULL;
 }
 
+bool str_starts_with(str *s, const char *search) {
+  if (s == NULL) return false;
+  if (search == NULL) return false;
+
+  size_t searchLength = strlen(search);
+  if (searchLength > str_length(s)) return false;
+  if (searchLength == 0) return false;
+
+  char *haystackFront = str_data(s);
+  char *haystackBack = str_data(s) + (searchLength - 1);
+  char *needleFront = search;
+  char *needleBack = search + (searchLength - 1);
+
+  // If the first characters of each other do not match
+  size_t middle = searchLength / 2;
+  for (size_t i = 0; i < searchLength; ++i) {
+    if (*haystackFront != *needleFront) return false;
+    if (*haystackBack != *needleBack) return false;
+
+    haystackFront++;
+    haystackBack--;
+    needleFront++;
+    needleBack--;
+  }
+
+  return true;
+}
+
 /**
  * Destroy (free) a string object.
  *

@@ -29,14 +29,17 @@ int main(int argc, char *argv[]) {
   throw_(full_url == NULL, "Could not build full marvel url");
 
   // make get request
+  http_response *response = http_get(full_url);
 
   // show response
 
   str_free(query);
+  str_free(full_url);
 
   return EXIT_SUCCESS;
 
 error:
   str_free(query);
+  str_free(full_url);
   return EXIT_FAILURE;
 }

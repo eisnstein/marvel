@@ -13,13 +13,13 @@
  * Generates the md5 hash from the ts + privateKey + publicKey.
  * From marvel documentation: md5(ts + privateKey + publicKey)
  *
- * @param str* ts                   timestamp
+ * @param char* ts                   timestamp
  * @param char* privateKey    Marvel API private key
  * @param char* publicKey     Marvel API public key
  *
  * @return char*                    pointer to hash value
  */
-char *generate_hash(const str *ts, const char *privateKey,
+char *generate_hash(const char *ts, const char *privateKey,
                     const char *publicKey) {
   EVP_MD_CTX *mdctx;
   const EVP_MD *md;
@@ -33,7 +33,7 @@ char *generate_hash(const str *ts, const char *privateKey,
   hash_payload = str_create();
   throw_mem_(hash_payload);
 
-  str_append(hash_payload, str_data(ts));
+  str_append(hash_payload, ts);
   str_append(hash_payload, privateKey);
   str_append(hash_payload, publicKey);
 
@@ -58,25 +58,29 @@ error:
 }
 
 /**
- * Generate a timestamp and retrun it as string.
+ * Generate a timestamp
  *
  * @return str*       pointer to timestamp string
  */
 char *generate_timestamp() {
-  char *tmp = malloc(32);
-  time_t timeInSeconds = time(NULL);
-  sprintf(tmp, "%d", timeInSeconds);
+  char *tmp = calloc(32, sizeof(char));
+  time_t timestampInSeconds = time(NULL);
+  sprintf(tmp, "%ld", timestampInSeconds);
   return tmp;
 }
 
 char *generate_url(const char *endpoint, const char *query, const char *ts,
                    const char *publicKey, const char *hash) {
-  char *tmp = malloc(256);
+  char *tmp = calloc(256, sizeof(char));
+  throw_mem_(tmp);
 
   sprintf(tmp, "%s/%s?ts=%s&apikey=%s&hash=%s", endpoint, query, ts, publicKey,
           hash);
 
   return tmp;
+
+error:
+  return NULL;
 }
 
 /**
@@ -96,12 +100,10 @@ str *marvel_build_url(str *query) {
   const char *privateKey = getenv(MARVEL_PRIVATE_KEY);
   throw_(privateKey == NULL, "Could not get private key from env");
 
-  const char *ts = generate_timestamp();
-  const char *hash = generate_hash(ts, privateKey, publicKey);
-  const char *tmp =
-      generate_url(endpoint, str_data(query), ts, publicKey, hash);
+  char *ts = generate_timestamp();
+  char *hash = generate_hash(ts, privateKey, publicKey);
+  char *tmp = generate_url(endpoint, str_data(query), ts, publicKey, hash);
 
-  debug_v_("url: %s", tmp);
   str *url = str_from(tmp);
   throw_(url == NULL, "Could not create url from tmp");
 
