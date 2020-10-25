@@ -26,13 +26,14 @@
     R = NULL;                 \
   } while (0);
 
+typedef struct addrinfo adri;
 typedef enum http_mode { GET, POST } http_mode;
 
 typedef struct http_request {
   http_mode mode;
   strlist *headers;
   str *body;
-  uri *uri;
+  uri *uri_data;
 } http_request;
 
 typedef struct http_response {
@@ -45,18 +46,18 @@ typedef struct http_response {
 typedef struct http_client {
   int sockfd;
   int connection;
-  struct addrinfo *res;
-  http_request *req;
+  adri *address_info;
 } http_client;
 
 extern http_client *http_client_create();
 extern http_response *http_get(http_client *client, str *url);
-/* extern bool http_connect(http_client *client, str *url, str *port);
-extern bool http_send(http_client *client, uri *uri);
+extern bool http_connect(http_client *client, str *host, str *port);
+/*extern bool http_send(http_client *client, uri *uri);
 extern str *http_receive(http_client *client); */
 extern void http_client_destroy(http_client *client);
-extern http_request *http_request_create(str *url);
-extern void http_request_destroy(http_request *r);
+extern http_request *http_request_create();
+extern char *http_request_build(http_request *request);
+extern void http_request_destroy(http_request *request);
 
 extern http_response *http_response_create();
 extern bool http_response_parse(http_response *response, str *response_raw);

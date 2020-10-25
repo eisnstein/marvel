@@ -77,7 +77,7 @@ error:
   return false;
 }
 
-uri *uri_create(str *url) {
+uri *uri_create() {
   uri *u = malloc(sizeof(uri));
   throw_mem_(u);
 
@@ -95,8 +95,8 @@ error:
   return NULL;
 }
 
-bool uri_parse(uri *uri, str *url) {
-  bool res = parse_url(uri, url);
+bool uri_parse(uri *u, str *url) {
+  bool res = parse_url(u, url);
   throw_v_(res == false, "Could not parse url: %s", str_data(url));
 
   return true;

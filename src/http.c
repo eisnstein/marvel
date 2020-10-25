@@ -11,19 +11,24 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include "uri.h"
 #include "util.h"
 
-static bool get_address_info(http_client *client);
-static inline void *get_in_addr(struct sockaddr *sa);
+// static bool get_address_info(http_client *client);
+// static inline void *get_in_addr(struct sockaddr *sa);
 
+/**
+ * Create http client instance.
+ *
+ * @return http_client | NULL
+ */
 http_client *http_client_create() {
   http_client *h = malloc(sizeof(http_client));
   throw_mem_(h);
 
   h->sockfd = 0;
   h->connection = 0;
-  h->res = NULL;
-  h->req = NULL;
+  h->address_info = NULL;
 
   return h;
 
@@ -31,19 +36,19 @@ error:
   return NULL;
 }
 
-static bool get_address_info(http_client *client) {
+static bool get_address_info(http_client *client, str *host, str *port) {
   int status = 0;
   struct addrinfo hints;
 
   memset(&hints, 0, sizeof(hints));
-  hints.ai_flags = AI_PASSIVE;
+  // hints.ai_flags = AI_PASSIVE;
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
+  hints.ai_protocol = 0;
 
-  status = getaddrinfo(str_data(client->req->uri->host),
-                       str_data(client->req->uri->port), &hints, &client->res);
+  status = getaddrinfo(str_data(host), str_data(port), &hints,
+                       &client->address_info);
   throw_(status != 0, "Could not get address info");
-  throw_(client->res == NULL, "Could not get address info");
 
   return true;
 
@@ -61,41 +66,43 @@ static inline void *get_in_addr(struct sockaddr *sa) {
 
 static bool get_socket_and_connect(http_client *client) {
   struct addrinfo *p;
-  char ipstr[INET6_ADDRSTRLEN];
+  // char ipstr[INET6_ADDRSTRLEN];
 
-  for (p = client->res; p != NULL; p = p->ai_next) {
+  for (p = client->address_info; p != NULL; p = p->ai_next) {
     if ((client->sockfd =
              socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) {
-      perror("client: socket");
       continue;
     }
 
     if ((client->connection =
              connect(client->sockfd, p->ai_addr, p->ai_addrlen)) == -1) {
       close(client->sockfd);
-      perror("client: connect");
       continue;
     }
 
+    // We have a socket and a connection, so we can break here
     break;
+  }
+
+  freeaddrinfo(client->address_info);
+  client->address_info = NULL;
+
+  if (client->sockfd == -1 || client->connection == -1) {
+    return false;
   }
 
   /*   inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr),
     ipstr, sizeof(ipstr)); debug_v_("client: connecting to %s", ipstr); */
 
-  freeaddrinfo(client->res);
-
   return true;
 }
 
-static bool http_connect(http_client *client) {
-  throw_(client == NULL, "No http client provided");
-
-  bool res = get_address_info(client);
+bool http_connect(http_client *client, str *host, str *port) {
+  bool res = get_address_info(client, host, port);
   throw_(res == false, "Could not get address info");
 
   res = get_socket_and_connect(client);
-  throw_(res == false, "Could not get socket or connect");
+  throw_(res == false, "Could not get socket or connection");
 
   return true;
 
@@ -103,23 +110,22 @@ error:
   return false;
 }
 
-static bool http_send(http_client *client, uri *urim) {
+/**
+ * Send the request.
+ *
+ * @param client Http client instance
+ *
+ * @return bool Success or failure of operation
+ */
+static bool http_send(http_client *client, const char *raw_req) {
   ssize_t bytes_sent = 0;
 
-  // build the request
-  char *req = "request";
-
-  debug_v_("req:\n%s", req);
-
-  bytes_sent = send(client->sockfd, req, strlen(req), 0);
-  throw_(bytes_sent == -1, "Could not send request.");
-
-  free(req);
+  bytes_sent = send(client->sockfd, raw_req, strlen(raw_req), 0);
+  throw_(bytes_sent == -1, "Could not send request");
 
   return true;
 
 error:
-  if (req) free(req);
   return false;
 }
 
@@ -145,22 +151,38 @@ error:
   return NULL;
 }
 
+/**
+ * Function for making HTTP GET requests.
+ *
+ * @param client Http client instance
+ * @param url The full url to send the request to
+ *
+ * @return http_response | NULL Http response object
+ */
 http_response *http_get(http_client *client, str *url) {
   http_response *http_response = NULL;
-  bool r = false;
+  bool res = false;
 
-  http_request *request = http_request_create(url);
+  http_request *request = http_request_create();
   throw_(request == NULL, "Could not create request object");
 
-  client->req = request;
+  uri *u = uri_create();
+  throw_(u == NULL, "Could not create uri object");
+
+  res = uri_parse(u, url);
+  throw_(res == false, "Could not parse url");
+
+  request->uri_data = u;
 
   // connect to marvel api
-  r = http_connect(client);
-  throw_v_(r == false, "Could not connect to %s", str_data(url));
+  res = http_connect(client, u->host, u->port);
+  throw_v_(res == false, "Could not connect to %s", str_data(url));
+
+  const *raw_req = http_request_build(request);
 
   // send the request to marvel
-  // r = http_send(client, uri_maker);
-  // throw_(r == false, "Could not send request to marvel");
+  res = http_send(client, raw_req);
+  throw_(res == false, "Could not send request to marvel");
 
   // receive response from marvel
   // str *response_raw = http_receive(client);
@@ -173,9 +195,13 @@ http_response *http_get(http_client *client, str *url) {
 
   // r = http_response_parse(http_response, response_raw);
   // throw_(r == false, "Could not parse http response");
-  return NULL;
+  free(raw_req);
+  http_request_free(request);
+  return http_response;
 
 error:
+  http_request_free(request);
+  if (raw_req) free(raw_req);
   return NULL;
 }
 
@@ -185,21 +211,26 @@ extern void http_client_destroy(http_client *client) {
   }
 
   close(client->sockfd);
-  http_request_free(client->req);
+  if (client->address_info) {
+    freeaddrinfo(client->address_info);
+  }
 
   free(client);
 }
 
 /**
- * HTTP Request
+ * Create http request instance.
+ *
+ * @return http_request | NULL
  */
-http_request *http_request_create(str *url) {
+http_request *http_request_create() {
   http_request *r = malloc(sizeof(http_request));
   throw_mem_(r);
 
   r->mode = GET;
   r->headers = NULL;
   r->body = NULL;
+  r->uri_data = NULL;
 
   return r;
 
@@ -207,15 +238,32 @@ error:
   return NULL;
 }
 
-void http_request_destroy(http_request *req) {
-  if (req == NULL) {
-    return;
-  }
+char *http_request_build(http_request *request) {
+  const uri *u = request->uri_data;
+  char *req = calloc(256, sizeof(char));
+  throw_mem_(req);
 
-  strlist_free(req->headers);
-  str_free(req->body);
+  sprintf(req,
+          "GET %s%s&limit=2 HTTP/1.1\r\n"
+          "Host: gateway.marvel.com\r\n"
+          "User-Agent: curl/7.58.0\r\n"
+          "Accept: */*\r\n\r\n",
+          str_data(u->path), str_data(u->query));
 
-  free(req);
+  return req;
+
+error:
+  return NULL;
+}
+
+void http_request_destroy(http_request *request) {
+  if (request == NULL) return;
+
+  strlist_free(request->headers);
+  str_free(request->body);
+  uri_free(request->uri_data);
+
+  free(request);
 }
 
 /**

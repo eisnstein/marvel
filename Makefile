@@ -37,8 +37,8 @@ $(TEST_DIR)/env_test: $(TEST_DIR)/env_test.c $(SRC_DIR)/env.c
 $(TEST_DIR)/marvel_test: $(TEST_DIR)/marvel_test.c
 	$(CC) $< -o $@ $(CFLAGS) build/marvel.o build/env.o build/str.o $(LDLIBS)
 
-$(TEST_DIR)/http_test: $(TEST_DIR)/http_test.c $(SRC_DIR)/env.c $(SRC_DIR)/str.c
-	$(CC) $< -o $@ $(CFLAGS) build/http.o build/marvel.o build/env.o build/str.o $(LDLIBS)
+$(TEST_DIR)/http_test: $(TEST_DIR)/http_test.c $(SRC_DIR)/http.c $(SRC_DIR)/str.c $(SRC_DIR)/uri.c
+	$(CC) $< -o $@ $(CFLAGS) build/http.o build/marvel.o build/env.o build/str.o build/uri.o $(LDLIBS)
 
 $(TEST_DIR)/uri_test: $(TEST_DIR)/uri_test.c $(SRC_DIR)/uri.c $(SRC_DIR)/str.c
 	$(CC) $< -o $@ $(CFLAGS) build/uri.o build/str.o

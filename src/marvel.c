@@ -91,6 +91,10 @@ error:
  * @return str* url       pointer to fully built Marvel request url
  */
 str *marvel_build_url(str *query) {
+  char *ts = NULL;
+  char *hash = NULL;
+  char *tmp = NULL;
+
   const char *endpoint = getenv(MARVEL_ENDPOINT);
   throw_(endpoint == NULL, "Could not get base url from env");
 
@@ -100,9 +104,9 @@ str *marvel_build_url(str *query) {
   const char *privateKey = getenv(MARVEL_PRIVATE_KEY);
   throw_(privateKey == NULL, "Could not get private key from env");
 
-  char *ts = generate_timestamp();
-  char *hash = generate_hash(ts, privateKey, publicKey);
-  char *tmp = generate_url(endpoint, str_data(query), ts, publicKey, hash);
+  ts = generate_timestamp();
+  hash = generate_hash(ts, privateKey, publicKey);
+  tmp = generate_url(endpoint, str_data(query), ts, publicKey, hash);
 
   str *url = str_from(tmp);
   throw_(url == NULL, "Could not create url from tmp");

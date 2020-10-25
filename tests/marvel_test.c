@@ -53,15 +53,18 @@ char *test_generate_url() {
 }
 
 char *test_marvel_build_url() {
+  str *query = str_from("comics");
+
+  str *url = marvel_build_url(query);
+  mu_assert(url == NULL, "Url should be null");
+
   int res = env_init(".env.test");
 
-  str *query = str_from("comics");
-  str *url = marvel_build_url(query);
-
+  url = marvel_build_url(query);
   const char *expected = "http://gateway.marvel.com/v1/public/comics?ts=";
 
   mu_assert(str_starts_with(url, expected) == true,
-            "Url should start with right enbpoint");
+            "Url should start with right endpoint");
 
   str_free(query);
   str_free(url);
