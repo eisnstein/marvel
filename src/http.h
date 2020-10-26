@@ -6,7 +6,7 @@
 #include "str.h"
 #include "uri.h"
 
-#define MAXDATASIZE 1024
+#define MAXDATASIZE 2048
 
 #define http_client_free(H) \
   do {                      \
@@ -52,8 +52,6 @@ typedef struct http_client {
 extern http_client *http_client_create();
 extern http_response *http_get(http_client *client, str *url);
 extern bool http_connect(http_client *client, str *host, str *port);
-/*extern bool http_send(http_client *client, uri *uri);
-extern str *http_receive(http_client *client); */
 extern void http_client_destroy(http_client *client);
 extern http_request *http_request_create();
 extern char *http_request_build(http_request *request);

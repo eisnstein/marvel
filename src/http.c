@@ -41,7 +41,7 @@ static bool get_address_info(http_client *client, str *host, str *port) {
   struct addrinfo hints;
 
   memset(&hints, 0, sizeof(hints));
-  // hints.ai_flags = AI_PASSIVE;
+  hints.ai_flags = AI_PASSIVE;
   hints.ai_family = AF_UNSPEC;
   hints.ai_socktype = SOCK_STREAM;
   hints.ai_protocol = 0;
@@ -123,6 +123,8 @@ static bool http_send(http_client *client, const char *raw_req) {
   bytes_sent = send(client->sockfd, raw_req, strlen(raw_req), 0);
   throw_(bytes_sent == -1, "Could not send request");
 
+  debug_v_("Bytes send: %zu", bytes_sent);
+
   return true;
 
 error:
@@ -131,23 +133,27 @@ error:
 
 static str *http_receive(http_client *client) {
   char buf[MAXDATASIZE + 1] = {0};
-  str *response_raw = str_create_v(MAXDATASIZE * 5, MAXDATASIZE);
-  throw_(response_raw == NULL, "Could not create string.");
+  str *raw_response = str_create_v(MAXDATASIZE * 5, MAXDATASIZE);
+  throw_(raw_response == NULL, "Could not create string");
 
   ssize_t bytes_received = 0;
   do {
     bytes_received = recv(client->sockfd, buf, MAXDATASIZE, 0);
-    throw_(bytes_received == -1, "Could not receive data.");
+    throw_(bytes_received == -1, "Could not receive data");
 
-    debug_v_("Bytes received: %zu\n", bytes_received);
+    debug_v_("Bytes received: %zu", bytes_received);
+    buf[bytes_received] = '\0';
 
-    str_append(response_raw, buf);
+    str_append(raw_response, buf);
   } while (bytes_received > 0);
 
-  return response_raw;
+  debug_v_("Size of response: %zu", str_length(raw_response));
+  debug_v_("Raw response:\n%s", str_data(raw_response));
+
+  return raw_response;
 
 error:
-  if (response_raw) str_free(response_raw);
+  str_free(raw_response);
   return NULL;
 }
 
@@ -178,30 +184,31 @@ http_response *http_get(http_client *client, str *url) {
   res = http_connect(client, u->host, u->port);
   throw_v_(res == false, "Could not connect to %s", str_data(url));
 
-  const *raw_req = http_request_build(request);
+  const char *raw_request = http_request_build(request);
+  debug_v_("Raw request size: %zu", strlen(raw_request));
 
   // send the request to marvel
-  res = http_send(client, raw_req);
+  res = http_send(client, raw_request);
   throw_(res == false, "Could not send request to marvel");
 
   // receive response from marvel
-  // str *response_raw = http_receive(client);
-  // throw_(response_raw == NULL, "Could not receive data");
-
-  // debug_v_("size of response: %ld", str_length(response_raw));
+  str *raw_response = http_receive(client);
+  throw_(raw_response == NULL, "Could not receive data");
 
   http_response = http_response_create();
   throw_(http_response == NULL, "Could not create http response object");
 
-  // r = http_response_parse(http_response, response_raw);
+  // r = http_response_parse(http_response, raw_response);
   // throw_(r == false, "Could not parse http response");
-  free(raw_req);
+  free(raw_request);
+  str_free(raw_response);
   http_request_free(request);
   return http_response;
 
 error:
+  if (raw_request) free(raw_request);
+  str_free(raw_response);
   http_request_free(request);
-  if (raw_req) free(raw_req);
   return NULL;
 }
 
@@ -244,7 +251,7 @@ char *http_request_build(http_request *request) {
   throw_mem_(req);
 
   sprintf(req,
-          "GET %s%s&limit=2 HTTP/1.1\r\n"
+          "GET %s%s&limit=1 HTTP/1.1\r\n"
           "Host: gateway.marvel.com\r\n"
           "User-Agent: curl/7.58.0\r\n"
           "Accept: */*\r\n\r\n",
@@ -285,10 +292,10 @@ error:
   return NULL;
 }
 
-bool http_response_parse(http_response *response, str *response_raw) {
+bool http_response_parse(http_response *response, str *raw_response) {
   str *tmp = NULL;
   throw_(response == NULL, "http_response must be initialised");
-  throw_(response_raw == NULL, "raw response cannot be empty");
+  throw_(raw_response == NULL, "raw response cannot be empty");
 
   char method[10] = {'\0'};
   char status_code[4] = {'\0'};
@@ -296,9 +303,9 @@ bool http_response_parse(http_response *response, str *response_raw) {
   char line[200] = {'\0'};
   strlist *headers = strlist_create();
 
-  response->raw = response_raw;
+  response->raw = raw_response;
 
-  char *data = str_data(response_raw);
+  char *data = str_data(raw_response);
 
   int r = sscanf(data, "%s %s %s\n", method, status_code, status);
   throw_(r != 3, "failed to parse first line of response");
