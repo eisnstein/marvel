@@ -277,14 +277,10 @@ bool str_starts_with(str *s, const char *search) {
 /**
  * Destroy (free) a string object.
  *
- * @param str **s    pointer to a pointer to a string object
- *
- * @return void
+ * @param s Pointer a string object
  */
 void str_destroy(str *s) {
-  if (s == NULL) {
-    return;
-  }
+  if (s == NULL) return;
 
   if (s->data) {
     free(s->data);

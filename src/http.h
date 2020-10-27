@@ -51,14 +51,14 @@ typedef struct http_client {
 
 extern http_client *http_client_create();
 extern http_response *http_get(http_client *client, str *url);
-extern bool http_connect(http_client *client, str *host, str *port);
+extern bool http_connect(http_client *client, const str *host, const str *port);
 extern void http_client_destroy(http_client *client);
 extern http_request *http_request_create();
-extern char *http_request_build(http_request *request);
+extern char *http_request_build(const http_request *request);
 extern void http_request_destroy(http_request *request);
 
 extern http_response *http_response_create();
-extern bool http_response_parse(http_response *response, str *response_raw);
+extern bool http_response_parse(http_response *response, str *raw_response);
 extern void http_response_destroy(http_response *r);
 
 #endif

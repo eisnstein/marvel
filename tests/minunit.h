@@ -25,29 +25,25 @@
     }                                   \
   } while (0)
 
-#define mu_run_test(test)                \
-  do {                                   \
-    printf("------\n");                  \
-    printf("Running Test: %s\n", #test); \
-    message = test();                    \
-    tests_run++;                         \
-    if (message) return message;         \
+#define mu_run_test(test)        \
+  do {                           \
+    printf("\t%s\n", #test);     \
+    message = test();            \
+    tests_run++;                 \
+    if (message) return message; \
   } while (0)
 
-#define RUN_TESTS(name)                   \
-  int main(int argc, char *argv[]) {      \
-    argc = 1;                             \
-    printf("------\n");                   \
-    printf("TEST SUIT: %s\n", argv[0]);   \
-    char *result = name();                \
-    if (result != 0) {                    \
-      printf("Tests Failed\n");           \
-    } else {                              \
-      printf("------\n");                 \
-      printf("All Tests Passed\n");       \
-    }                                     \
-    printf("Tests run: %d\n", tests_run); \
-    exit(result != 0);                    \
+#define RUN_TESTS(name)                 \
+  int main(int argc, char *argv[]) {    \
+    argc = 1;                           \
+    printf("%s\n", argv[0]);            \
+    char *result = name();              \
+    if (result != 0) {                  \
+      printf("\nTests Failed\n");       \
+    } else {                            \
+      printf("\n\tAll Tests Passed\n"); \
+    }                                   \
+    exit(result != 0);                  \
   }
 
 int tests_run = 0;

@@ -39,8 +39,10 @@ int main(int argc, char *argv[]) {
 
   // make get request
   response = http_get(client, full_url);
+  throw_(response == NULL, "Could not make get request");
 
   // show response
+  debug_v_("Response body:\n%s\n", str_data(response->body));
 
   str_free(query);
   str_free(full_url);

@@ -2,20 +2,20 @@
 #set -e
 
 echo ""
-echo "Running all unit tests:"
+echo "Running all Tests:"
 echo ""
 
-for t in tests/*_test
+for t in ./*_test
 do
     if test -f $t
     then
-        if $VALGRIND ./$t 2>> tests/error_log.txt 
+        if $VALGRIND $t 2>> ./error_log.txt 
         then
-            echo $t "PASS"
+            echo ""
         else
             echo "ERROR in test $t:"
             echo "--------"
-            tail tests/error_log.txt
+            tail ./error_log.txt
             exit 1
         fi
     fi
