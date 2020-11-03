@@ -300,7 +300,7 @@ char *http_request_build(const http_request *request) {
   sprintf(req,
           "GET %s%s&limit=1 HTTP/1.1\r\n"
           "Host: gateway.marvel.com\r\n"
-          "User-Agent: curl/7.58.0\r\n"
+          "User-Agent: my-marvel/1.0\r\n"
           "Accept: application/json\r\n\r\n",
           str_data(u->path), str_data(u->query));
 
