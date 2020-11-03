@@ -25,8 +25,7 @@ $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
 
 .PHONY: tests
 tests: $(TESTS)
-	echo "created"
-	#./tests/runtests.sh
+	./runtests.sh
 
 $(TEST_DIR)/str_test: $(TEST_DIR)/str_test.c $(SRC_DIR)/str.c
 	$(CC) $< -o $@ $(CFLAGS) build/str.o

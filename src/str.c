@@ -25,8 +25,11 @@
  */
 
 /**
- * Creates / initialises an empty string object if a
- * predefined initial size and a predefined expand size.
+ * Creates / initialises an empty string object with a
+ * predefined initial size and expand size.
+ *
+ * Example:
+ *    str *newString = str_create();
  *
  * @return str | NULL   pointer to a string object
  */
@@ -49,17 +52,20 @@ error:
 }
 
 /**
- * Creates / initialises an empty string object if a
- * variable initial and expand size.
+ * Creates / initialises an empty string object with a
+ * given initial size and expand size.
+ *
+ * Example:
+ *    str *newString = str_create_v(256, 32);
  *
  * @return str | NULL   pointer to a string object
  */
 str *str_create_v(size_t initialSize, size_t expandSize) {
-  str *s = NULL;
+  if (expandSize < STR_EXPAND) {
+    expandSize = STR_EXPAND;
+  }
 
-  throw_(expandSize < 2, "Expand size cannot be lower than 2");
-
-  s = malloc(sizeof(str));
+  str *s = malloc(sizeof(str));
   throw_mem_(s);
 
   s->size = initialSize;
@@ -80,30 +86,39 @@ error:
  * Create a string object from a raw C char array.
  * The char array will be copied into the string object.
  *
+ * Example:
+ *    str *newString = str_from("example_string");
+ *
  * @param const char *string    pointer to a char array
  *
  * @return str | NULL           pointer to a string object
  */
 str *str_from(const char *string) {
-  str *s = NULL;
-  throw_(string == NULL, "String is NULL.");
+  if (string == NULL) {
+    return NULL;
+  }
 
-  s = str_create();
+  str *s = str_create();
   throw_(s == NULL, "Could not create str.");
 
   // the raw string can just be appended
   bool res = str_append(s, string);
-  throw_(res == false, "Could not append str.");
+  throw_(res == false, "Could not append raw string");
 
   return s;
 
 error:
-  if (s) str_free(s);
+  str_free(s);
   return NULL;
 }
 
 /**
  * Duplicate a string object.
+ *
+ * Example:
+ *    str *oldString = str_from("old");
+ *    str *newString = str_duplicate(oldString);
+ *    // str_data(newString) == "old"
  *
  * @param const str *s    pointer to string object
  *
@@ -122,15 +137,19 @@ str *str_duplicate(const str *s) {
  * string would be too long, memory will be reallocated to hold the whole
  * string data.
  *
- * @param str *s                pointer to a string object
- * @param const char *append    pointer to a char array
- * @param size_t len            string length of the char array
+ * Example:
+ *    str *oldString = str_from("old_");
+ *    str *newString = str_append(oldString, "new");
+ *    // str_data(newString) == "old_new"
  *
- * @return bool                 true on success / false on error
+ * @param s         pointer to a string object
+ * @param append    pointer to a char array
+ *
+ * @return bool     true on success / false on error
  */
 bool str_append(str *s, const char *append) {
-  throw_(s == NULL, "String to append to cannot be null.");
-  throw_(append == NULL, "String to append cannot be null.");
+  throw_(s == NULL, "String to append to is null");
+  throw_(append == NULL, "String to append is null");
 
   size_t len = strlen(append);
   char *new = NULL;
@@ -146,6 +165,7 @@ bool str_append(str *s, const char *append) {
     new = s->data;
   }
 
+  // copy data into new object
   memcpy(&new[s->len], append, len);
 
   new[new_len] = '\0';
@@ -163,10 +183,18 @@ error:
  * will be stored in a string object which itself will be
  * held in a node of a string list.
  *
- * @param str *s            pointer to a string object
- * @param char delimiter    char by which the string should be split
+ * Example:
+ *    str *toBeSplitted = str_from("key:value");
+ *    strlist *list = str_split(toBeSplitted, ':');
+ *    str *key = strlist_at(0);
+ *    str *value = strlist_at(1);
+ *    // str_data(key) == "key"
+ *    // str_data(value) == "value"
  *
- * @return strlist | NULL   pointer to string list
+ * @param s            pointer to a string object
+ * @param delimiter    pointer to char by which the string should be split
+ *
+ * @return strlist | NULL   pointer to a string list
  */
 strlist *str_split(str *s, const char *delimiter) {
   strlist *sl = strlist_create();
@@ -197,7 +225,7 @@ strlist *str_split(str *s, const char *delimiter) {
   return sl;
 
 error:
-  if (sl) strlist_free(sl);
+  strlist_free(sl);
   return NULL;
 }
 
@@ -205,11 +233,10 @@ error:
  * Put a raw string into an existing string object. Existing data
  * will be overwritten.
  *
- * @param str *s            pointer to a string object
- * @param const char *put   pointer to data which will be copied
- * @param size_t len        len of the raw string to copy into
+ * @param s       pointer to a string object
+ * @param put     pointer to data which will be copied
  *
- * @return bool             true on success / false on error
+ * @return bool   true on success / false on error
  */
 bool str_put_into(str *s, const char *put) {
   // to copy / overwrite the existing data, we just set
@@ -219,18 +246,37 @@ bool str_put_into(str *s, const char *put) {
   return str_append(s, put);
 }
 
+/**
+ * Extract a substring from a string object.
+ *
+ * Example:
+ *    str *s = str_from("not this, but this");
+ *    str *subStr = str_substr(s, 10, 8);
+ *    // str_data(subStr) == "but this"
+ *
+ * @param s         pointer to string object
+ * @param pos       start position
+ * @param length    length of the substring
+ *
+ * @return str | NULL   pointer to str object
+ */
 str *str_substr(str *s, size_t pos, size_t length) {
   size_t len = str_length(s);
+  // start position cannot be greate than length of string
   if (pos >= len) return NULL;
+  // length of substring can max be the length of the string - start position
   if (length >= len) length = len - pos;
+  // length of substring should be greate than 0
   if (length == 0) return NULL;
 
   const char *from = str_data(s);
+  // move to start position
   from += pos;
 
   char *tmp = malloc((sizeof(char) * length) + 1);
   throw_mem_(tmp);
 
+  // copy substring into tmp buffer
   strncpy(tmp, from, length);
   tmp[length] = '\0';
 
@@ -246,6 +292,20 @@ error:
   return NULL;
 }
 
+/**
+ * Check if a string starts with the given search value.
+ *
+ * Example:
+ *    str *s = str_from("The quick brown Fox jumps over the lazy Dog.");
+ *    const char *search = "The quick brow";
+ *    bool startsWith = str_starts_with(s, search);
+ *    // startsWith == true
+ *
+ * @param s         pointer to string object
+ * @param search    pointer to search value
+ *
+ * @return bool     true if string starts with value / false otherwise
+ */
 bool str_starts_with(str *s, const char *search) {
   if (s == NULL) return false;
   if (search == NULL) return false;
@@ -261,7 +321,7 @@ bool str_starts_with(str *s, const char *search) {
 
   // If the first characters of each other do not match
   size_t middle = searchLength / 2;
-  for (size_t i = 0; i < searchLength; ++i) {
+  for (size_t i = 0; i < middle; ++i) {
     if (*haystackFront != *needleFront) return false;
     if (*haystackBack != *needleBack) return false;
 
@@ -277,7 +337,9 @@ bool str_starts_with(str *s, const char *search) {
 /**
  * Destroy (free) a string object.
  *
- * @param s Pointer a string object
+ * @deprecated Do not use this function directly. Use 'str_free()' instead.
+ *
+ * @param s pointer a string object
  */
 void str_destroy(str *s) {
   if (s == NULL) return;
@@ -306,6 +368,9 @@ void str_destroy(str *s) {
 /**
  * Creates / initialises an empty string list.
  *
+ * Example:
+ *    strlist *list = strlist_create();
+ *
  * @return strlist | NULL   pointer to a string list
  */
 strlist *strlist_create() {
@@ -324,19 +389,19 @@ error:
 
 /**
  * Push / append a string object at the end of the string list.
- * The str object will copied into a new str object.
+ * The str object will be copied into a new str object.
  *
- * @param strlist *sl   pointer to a string list
- * @param str *value    pointer to a string object
+ * @param sl        pointer to a string list
+ * @param value     pointer to a string object
  *
- * @return bool         true on success / false on error
+ * @return bool     true on success / false on error
  */
 bool strlist_push(strlist *sl, str *value) {
   strlistnode *sln = malloc(sizeof(strlistnode));
   throw_mem_(sln);
 
   sln->value = str_duplicate(value);
-  throw_(sln->value == NULL, "Could not copy str into strlist.");
+  throw_(sln->value == NULL, "Could not copy str into strlist");
 
   sln->next = NULL;
   sln->prev = NULL;
@@ -363,14 +428,15 @@ error:
 /**
  * Get the last element of a string list.
  *
- * @param strlist *sl   pointer to a string list
+ * @param sl    pointer to a string list
  *
- * @return str          pointer to a string object
+ * @return str  pointer to a string object
  */
 str *strlist_pop(strlist *sl) {
   strlistnode *sln = sl->tail;
 
   sl->tail = sln->prev;
+  sl->tail->next = NULL;
   sl->size--;
 
   return sln->value;
@@ -379,8 +445,8 @@ str *strlist_pop(strlist *sl) {
 /**
  * Get the string object of a specific index in the string list.
  *
- * @param strlist *sl   pointer to a string list
- * @param size_t index  0-based index of the string object
+ * @param sl      pointer to a string list
+ * @param index   0-based index of the string object
  *
  * @return str | NULL   pointer to a string object
  */
@@ -404,9 +470,9 @@ str *strlist_at(strlist *sl, size_t index) {
 /**
  * Destroy (free) a string list.
  *
- * @param strlist **sl   pointer to a string list
+ * @deprecated Do not use this function directly. Use 'strlist_free()' instead.
  *
- * @return void
+ * @param sl   pointer to a string list
  */
 void strlist_destroy(strlist *sl) {
   if (sl == NULL) {

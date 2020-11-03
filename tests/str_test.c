@@ -63,9 +63,16 @@ char *test_str_create_v() {
 
   str_free(s);
 
-  s = str_create_v(32, 0);
+  s = str_create_v(320, 31);
 
-  mu_assert(s == NULL, "String should not be initialized with expand size 0");
+  mu_assert_v(s->len == 0, "String len should be 0, but is %zu", s->len);
+  mu_assert_v(s->size == 320, "String initial size should be 320, but is %zu",
+              s->size);
+  mu_assert_v(s->expand == 32, "String expand should be 32, but is %zu",
+              s->expand);
+  mu_assert(s->data != NULL, "String data is NULL");
+
+  str_free(s);
 
   return NULL;
 }

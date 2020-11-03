@@ -33,17 +33,17 @@
     if (message) return message; \
   } while (0)
 
-#define RUN_TESTS(name)                 \
-  int main(int argc, char *argv[]) {    \
-    argc = 1;                           \
-    printf("%s\n", argv[0]);            \
-    char *result = name();              \
-    if (result != 0) {                  \
-      printf("\nTests Failed\n");       \
-    } else {                            \
-      printf("\n\tAll Tests Passed\n"); \
-    }                                   \
-    exit(result != 0);                  \
+#define RUN_TESTS(name)                   \
+  int main(int argc, char *argv[]) {      \
+    argc = 1;                             \
+    printf("%s\n", argv[0]);              \
+    char *result = name();                \
+    if (result != 0) {                    \
+      printf("\nTests Failed%d\n", argc); \
+    } else {                              \
+      printf("\n\tAll Tests Passed\n");   \
+    }                                     \
+    exit(result != 0);                    \
   }
 
 int tests_run = 0;

@@ -17,6 +17,7 @@ int main(int argc, char *argv[]) {
   str *full_url = NULL;
   http_client *client = NULL;
   http_response *response = NULL;
+  FILE *outputFile = NULL;
 
   // check if useage
   die_(argc < 2, "Usage: marvel <query>");
@@ -39,15 +40,21 @@ int main(int argc, char *argv[]) {
 
   // make get request
   response = http_get(client, full_url);
-  throw_(response == NULL, "Could not make get request");
+  throw_(response == NULL, "Could not make GET request");
 
-  // show response
+  // store response
   debug_v_("Response body:\n%s\n", str_data(response->body));
+  outputFile = fopen("output.json", "w+");
+  throw_(outputFile == NULL, "Could not open output file");
+
+  int r = fputs(str_data(response->body), outputFile);
+  throw_(r < 0, "Could not write JSON response to output file");
 
   str_free(query);
   str_free(full_url);
   http_client_free(client);
   http_response_free(response);
+  fclose(outputFile);
 
   return EXIT_SUCCESS;
 
@@ -56,5 +63,6 @@ error:
   str_free(full_url);
   http_client_free(client);
   http_response_free(response);
+  if (outputFile) fclose(outputFile);
   return EXIT_FAILURE;
 }

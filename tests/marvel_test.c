@@ -11,7 +11,7 @@ char *test_generate_hash() {
   const char *privateKey = "private_key";
   const char *ts = "1234";
 
-  const char *hash = generate_hash(ts, privateKey, publicKey);
+  char *hash = generate_hash(ts, privateKey, publicKey);
 
   // https://www.hashgenerator.de/
   // -> select "MD5" -> write into the input field "1234private_keypublic_key"
@@ -25,7 +25,7 @@ char *test_generate_hash() {
 }
 
 char *test_generate_timestamp() {
-  const char *ts = generate_timestamp();
+  char *ts = generate_timestamp();
 
   mu_assert_v(strlen(ts) == 10,
               "Timestamp should have length of 10, but has %zu", strlen(ts));
@@ -41,8 +41,8 @@ char *test_generate_url() {
       "comics?ts=1234&apikey=public_key&hash="
       "hash123";
 
-  const char *url = generate_url("http://test.com/api", "comics", "1234",
-                                 "public_key", "hash123");
+  char *url = generate_url("http://test.com/api", "comics", "1234",
+                           "public_key", "hash123");
 
   mu_assert_v(strcmp(url, expected) == 0,
               "Full url should be '%s', but is '%s'", expected, url);
@@ -58,7 +58,8 @@ char *test_marvel_build_url() {
   str *url = marvel_build_url(query);
   mu_assert(url == NULL, "Url should be null");
 
-  int res = env_init(".env.test");
+  bool res = env_init(".env.test");
+  mu_assert(res == true, "env init should be success");
 
   url = marvel_build_url(query);
   const char *expected = "http://gateway.marvel.com/v1/public/comics?ts=";

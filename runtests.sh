@@ -5,6 +5,9 @@ echo ""
 echo "Running all Tests:"
 echo ""
 
+cd tests
+rm -f ./error_log.txt
+
 for t in ./*_test
 do
     if test -f $t
